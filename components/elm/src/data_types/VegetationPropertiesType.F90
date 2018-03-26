@@ -153,6 +153,10 @@ module VegetationPropertiesType
      real(r8), pointer :: needleleaf(:)    => null()   !needleleaf or broadleaf
      real(r8), pointer :: nfixer(:)        => null()   !cablity of nitrogen fixation from atm. N2
 
+     !----------------------F.-M. Yuan (2018-03-23): user-defined parameter file ---------------------------------------------------------------------
+     integer, allocatable :: nonvascular(:)       ! nonvascular plant lifeform flag (0 or 1-moss or 2-lichen)
+     integer, allocatable :: nfixer(:)            ! N-fixer flag (0 or 1)
+     !----------------------F.-M. Yuan (2018-03-23): user-defined parameter file ---------------------------------------------------------------------
 
    contains
    procedure, public :: Init => veg_vp_init
@@ -193,7 +197,10 @@ contains
     ! new properties for flexible PFT
     use pftvarcon , only : climatezone, nonvascular, graminoid, iscft,needleleaf, nfixer
     !
-
+    !----------------------F.-M. Yuan (2018-03-23): user-defined parameter file ---------------------------------------------------------------------
+    use pftvarcon , only : nonvascular, nfixer
+    !----------------------F.-M. Yuan (2018-03-23): user-defined parameter file ---------------------------------------------------------------------
+    
     class (vegetation_properties_type) :: this
 
     !LOCAL VARIABLES:
@@ -327,6 +334,12 @@ contains
 
     allocate( this%crit_gdd1(0:numpft))                          ; this%crit_gdd1(:)             =nan
     allocate( this%crit_gdd2(0:numpft))                          ; this%crit_gdd2(:)             =nan
+
+    !----------------------F.-M. Yuan (2018-03-23): user-defined parameter file ---------------------------------------------------------------------
+    allocate(this%nonvascular(0:numpft))                         ; this%nonvascular(:)           =huge(1)
+    allocate(this%nfixer(0:numpft))                              ; this%nfixer(:)                =huge(1)
+    !----------------------F.-M. Yuan (2018-03-23): user-defined parameter file ---------------------------------------------------------------------
+
     do m = 0,numpft
 
        ! not needed anymore: woody(m)=1 for tree, 2 for shrub, or 0 for any other
@@ -414,7 +427,6 @@ contains
        this%mbbopt(m)       = mbbopt(m)
        this%nstor(m)        = nstor(m)
        this%br_xr(m)        = br_xr(m)
-<<<<<<< HEAD
        ! new properties for flexible PFT
        this%climatezone(m)  = climatezone(m)
        this%nonvascular(m)  = nonvascular(m)
@@ -422,11 +434,8 @@ contains
        this%iscft(m)        = iscft(m)
        this%needleleaf(m)   = needleleaf(m)
        this%nfixer(m)       = nfixer(m)
-
-=======
        this%crit_gdd1(m)    = crit_gdd1(m)
        this%crit_gdd2(m)    = crit_gdd2(m)
->>>>>>> ed43b2588d (Add Lin Meng's new phenology algorithm)
     end do
 
     do m = 0,numpft

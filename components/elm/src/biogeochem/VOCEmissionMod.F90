@@ -706,6 +706,7 @@ contains
     else if (crop(ivt_in) == 1 .or. iscft(ivt_in)) then !crops
        get_map_EF = vocemis_vars%efisop_grc(6,g_in, ti_in)
     end if
+    !----------------------F.-M. Yuan: 2018-03-23---------------------------------------------------------------------
 
   end function get_map_EF
 

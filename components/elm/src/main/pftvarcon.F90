@@ -357,7 +357,6 @@ module pftvarcon
   real(r8), allocatable :: temp_iscft(:)       ! for file read, translated to logical afterwards
   real(r8), allocatable :: nfixer(:)           ! nitrogen fixer flag  (0 = inable, 1 = able to nitrogen fixation from atm. N2)
 
-
   !
   ! !PUBLIC MEMBER FUNCTIONS:
   public :: pftconrd ! Read and initialize vegetation (PFT) constants
@@ -696,6 +695,11 @@ contains
     tide_coeff_amp(:)    = 0.0
     tide_coeff_phase(:)  = 0.0
     tide_coeff_period(:) = 1.0 ! Making period 0 would cause divide by 0 error in sinusoid calculation
+  !----------------------F.-M. Yuan (2018-03-23): user-defined parameter file ---------------------------------------------------------------------
+    allocate( needleleaf         (0:mxpft) )
+    allocate( nonvascular        (0:mxpft) )
+    allocate( nfixer             (0:mxpft) )
+  !----------------------F.-M. Yuan (2018-03-23): user-defined parameter file ---------------------------------------------------------------------
 
     ! Set specific vegetation type values
 
@@ -1204,8 +1208,13 @@ contains
        do i = 0, mxpft
           mergetoelmpft(i) = i
        end do
-    end if
+    !----------------------F.-M. Yuan: 2018-03-23---------------------------------------------------------------------
+    ! 'mergetoclmpft' in the 'paramfile' is used as an indicator to user-defined parameter file
+    !end if
 
+    !call ncd_pio_closefile(ncid)
+    !----------------------F.-M. Yuan: 2018-03-23---------------------------------------------------------------------
+    ! 'mergetoclmpft' in the 'paramfile' is used as an indicator to user-defined parameter file
 
     ! NOTE: the following 5 PFT flags/options are addtions to 'woody', 'stress_decid', 'season_decid',
     !     'evergreen', and 'crop', 'percop'. For default ELM, will be hard-coded; while for user-defined

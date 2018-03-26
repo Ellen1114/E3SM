@@ -320,6 +320,10 @@ contains
     use pftvarcon, only : phen_cstar, phen_tforce, phen_tchil, phen_pstart, phen_tb, phen_ycrit 
     use pftvarcon, only : phen_spring, phen_autumn, phen_tbase, phen_crit_dayl
 !endif
+    !----------------------F.-M. Yuan: 2018-03-23---------------------------------------------------------------------
+    use pftvarcon, only : nshrub
+    !----------------------F.-M. Yuan: 2018-03-23---------------------------------------------------------------------
+
     !
     ! !ARGUMENTS:
     type(bounds_type)      , intent(in)    :: bounds                          
