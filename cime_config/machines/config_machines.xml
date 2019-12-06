@@ -3970,7 +3970,6 @@ commented out until "*** No rule to make target '.../libadios2pio-nm-lib.a'" iss
       </modules>
       <modules>
         <command name="load">netcdf/4.6.3</command>
-        <command name="load">pnetcdf/1.9.0</command>
         <command name="load">mkl/2019u5</command>
       </modules>
     </module_system>
