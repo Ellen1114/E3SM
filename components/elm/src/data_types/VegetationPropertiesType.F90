@@ -142,6 +142,8 @@ module VegetationPropertiesType
      real(r8), pointer :: mbbopt(:)        => null()   !Ball-Berry stomatal conductance slope
      real(r8), pointer :: nstor(:)         => null()   !Nitrogen storage pool timescale
      real(r8), pointer :: br_xr(:)         => null()   !Base rate for excess respiration
+     real(r8), pointer :: crit_gdd1(:) => null()   !Deciduous pheonlogy critical GDD intercept
+     real(r8), pointer :: crit_gdd2(:) => null()   !Deciduous pheonlogy critical GDD slope
      real(r8), pointer :: tc_stress        => null()   !Critial temperature for moisture stress
      ! new properties for flexible PFT
      real(r8), pointer :: climatezone(:)   => null()   !climate zone adapted
@@ -187,7 +189,7 @@ contains
     use pftvarcon , only : leafcp_obs, frootcp_obs, livewdcp_obs, deadwdcp_obs
     use pftvarcon , only : fnr, act25, kcha, koha, cpha, vcmaxha, jmaxha, tpuha
     use pftvarcon , only : lmrha, vcmaxhd, jmaxhd, tpuhd, lmrse, qe, theta_cj
-    use pftvarcon , only : bbbopt, mbbopt, nstor, br_xr, tc_stress, lmrhd
+    use pftvarcon , only : bbbopt, mbbopt, nstor, br_xr, tc_stress, lmrhd, crit_gdd1, crit_gdd2
     ! new properties for flexible PFT
     use pftvarcon , only : climatezone, nonvascular, graminoid, iscft,needleleaf, nfixer
     !
@@ -323,6 +325,8 @@ contains
     allocate( this%nfixer(0:numpft))                             ; this%nfixer(:)                =spval
     ! -----------------------------------------------------------------------------------------------------------
 
+    allocate( this%crit_gdd1(0:numpft))                          ; this%crit_gdd1(:)             =nan
+    allocate( this%crit_gdd2(0:numpft))                          ; this%crit_gdd2(:)             =nan
     do m = 0,numpft
 
        ! not needed anymore: woody(m)=1 for tree, 2 for shrub, or 0 for any other
@@ -410,6 +414,7 @@ contains
        this%mbbopt(m)       = mbbopt(m)
        this%nstor(m)        = nstor(m)
        this%br_xr(m)        = br_xr(m)
+<<<<<<< HEAD
        ! new properties for flexible PFT
        this%climatezone(m)  = climatezone(m)
        this%nonvascular(m)  = nonvascular(m)
@@ -418,6 +423,10 @@ contains
        this%needleleaf(m)   = needleleaf(m)
        this%nfixer(m)       = nfixer(m)
 
+=======
+       this%crit_gdd1(m)    = crit_gdd1(m)
+       this%crit_gdd2(m)    = crit_gdd2(m)
+>>>>>>> ed43b2588d (Add Lin Meng's new phenology algorithm)
     end do
 
     do m = 0,numpft
