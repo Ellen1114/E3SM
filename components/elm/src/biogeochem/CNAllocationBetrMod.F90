@@ -1991,7 +1991,7 @@ contains
     alloc_froot = min(alloc_froot, 0.4_r8)
 
     ! stem allocation
-    if (woody == 1.0_r8) then
+    if (woody >= 1.0_r8) then
        alloc_stem = alloc_s0 * 3.0_r8 *  min(nu_scalar,w_scalar) / (2.0_r8 * light_scalar + min(nu_scalar,w_scalar))
     else
        alloc_stem = 0.0_r8
@@ -2008,7 +2008,7 @@ contains
 
     ! if lai greater than laimax then no allocation to leaf; leaf allocation goes to stem or fine root
     if (laindex > laindex_max) then
-       if (woody == 1.0_r8) then
+       if (woody >= 1.0_r8) then
           alloc_stem = alloc_stem + alloc_leaf - 0.01_r8
        else
           alloc_froot = alloc_froot + alloc_leaf - 0.01_r8

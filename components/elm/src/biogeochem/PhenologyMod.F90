@@ -617,7 +617,7 @@ contains
             gresp_storage_to_xfer(p)      = bgtr(p) * gresp_storage(p)
             livecrootc_storage_to_xfer(p) = bgtr(p) * livecrootc_storage(p) ! For graminoid rhizomes
             
-            if (woody(ivt(p)) == 1.0_r8) then
+            if (woody(ivt(p)) >= 1.0_r8) then
                 livestemc_storage_to_xfer(p)  = bgtr(p) * livestemc_storage(p)
                 deadstemc_storage_to_xfer(p)  = bgtr(p) * deadstemc_storage(p)
                 deadcrootc_storage_to_xfer(p) = bgtr(p) * deadcrootc_storage(p)
@@ -627,7 +627,7 @@ contains
             leafn_storage_to_xfer(p)  = bgtr(p) * leafn_storage(p)
             frootn_storage_to_xfer(p) = bgtr(p) * frootn_storage(p)
             livecrootn_storage_to_xfer(p) = bgtr(p) * livecrootn_storage(p)
-            if (woody(ivt(p)) == 1.0_r8) then
+            if (woody(ivt(p)) >= 1.0_r8) then
                  livestemn_storage_to_xfer(p)  = bgtr(p) * livestemn_storage(p)
                  deadstemn_storage_to_xfer(p)  = bgtr(p) * deadstemn_storage(p)
                  deadcrootn_storage_to_xfer(p) = bgtr(p) * deadcrootn_storage(p)
@@ -637,7 +637,7 @@ contains
             leafp_storage_to_xfer(p)  = bgtr(p) * leafp_storage(p)
             frootp_storage_to_xfer(p) = bgtr(p) * frootp_storage(p)
             livecrootp_storage_to_xfer(p) = bgtr(p) * livecrootp_storage(p)
-            if (woody(ivt(p)) == 1.0_r8) then
+            if (woody(ivt(p)) >= 1.0_r8) then
                 livestemp_storage_to_xfer(p)  = bgtr(p) * livestemp_storage(p)
                 deadstemp_storage_to_xfer(p)  = bgtr(p) * deadstemp_storage(p)
                 deadcrootp_storage_to_xfer(p) = bgtr(p) * deadcrootp_storage(p)

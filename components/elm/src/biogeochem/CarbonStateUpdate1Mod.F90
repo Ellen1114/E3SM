@@ -276,7 +276,7 @@ contains
          veg_cs%frootc_xfer(p)     = veg_cs%frootc_xfer(p) - veg_cf%frootc_xfer_to_frootc(p)*dt
          veg_cs%livecrootc(p)      = veg_cs%livecrootc(p)      + veg_cf%livecrootc_xfer_to_livecrootc(p)*dt
          veg_cs%livecrootc_xfer(p) = veg_cs%livecrootc_xfer(p) - veg_cf%livecrootc_xfer_to_livecrootc(p)*dt
-         if (woody(ivt(p)) >= 1.0_r8) then
+         if (woody(ivt(p)) >= 1._r8) then
                 veg_cs%livestemc(p)       = veg_cs%livestemc(p)       + veg_cf%livestemc_xfer_to_livestemc(p)*dt
                 veg_cs%livestemc_xfer(p)  = veg_cs%livestemc_xfer(p)  - veg_cf%livestemc_xfer_to_livestemc(p)*dt
                 veg_cs%deadstemc(p)       = veg_cs%deadstemc(p)       + veg_cf%deadstemc_xfer_to_deadstemc(p)*dt
@@ -318,7 +318,8 @@ contains
          veg_cs%cpool(p) = veg_cs%cpool(p) - veg_cf%leaf_curmr(p)*dt
          veg_cs%cpool(p) = veg_cs%cpool(p) - veg_cf%froot_curmr(p)*dt
          veg_cs%cpool(p) = veg_cs%cpool(p) - veg_cf%livecroot_curmr(p)*dt
-         if (woody(ivt(p)) >= 1.0_r8) then
+         veg_cs%cpool(p) = veg_cs%cpool(p) - veg_cf%livecroot_curmr(p)*dt
+         if (woody(ivt(p)) >= 1._r8) then
             veg_cs%cpool(p) = veg_cs%cpool(p) - veg_cf%livestem_curmr(p)*dt
          end if
          if (iscft(ivt(p))) then ! skip 2 generic crops
