@@ -112,7 +112,7 @@ module ColumnDataType
     real(r8), pointer :: h2osoi_vol         (:,:) => null() ! volumetric soil water (0<=h2osoi_vol<=watsat) (1:nlevgrnd) (m3/m3)
     real(r8), pointer :: h2osfc             (:)   => null() ! surface water (kg/m2)
     real(r8), pointer :: salinity           (:) => null() ! salinity from PFLOTRAN when using interface (TAO 5/19/2020)
-    real(r8), pointer :: salt_content       (:,:) => null() ! salt mass for each soil layer
+    real(r8), pointer :: h2osfc_tide        (:)   => null() ! tidal height above surface
     real(r8), pointer :: h2ocan             (:)   => null() ! canopy water integrated to column (kg/m2)
     real(r8), pointer :: total_plant_stored_h2o(:)=> null() ! total water in plants (kg/m2)
     real(r8), pointer :: wslake_col         (:)   => null() ! col lake water storage (mm H2O)
@@ -1464,7 +1464,7 @@ contains
     allocate(this%smp_l              (begc:endc,-nlevsno+1:nlevgrnd)) ; this%smp_l              (:,:) = spval
     allocate(this%salinity           (begc:endc))                     ; this%salinity           (:)   = spval !TAO 5/19/2020
     allocate(this%salt_content       (begc:endc, 1:nlevgrnd))         ; this%salt_content       (:,:) = spval !SL added 7/27/21
-
+    allocate(this%h2osfc_tide        (begc:endc))                     ; this%h2osfc_tide        (:)   = spval 
     allocate(this%soilp              (begc:endc,1:nlevgrnd))          ; this%soilp              (:,:) = 0._r8
     allocate(this%swe_old            (begc:endc,-nlevsno+1:0))        ; this%swe_old            (:,:) = spval
     allocate(this%snw_rds            (begc:endc,-nlevsno+1:0))        ; this%snw_rds            (:,:) = spval
@@ -1558,10 +1558,10 @@ contains
          avgflag='A', long_name='Salinity concentration', &
          ptr_col=this%salinity)
 
-   this%salt_content(begc:endc,:) = spval
-    call hist_addfld2d (fname='SALT_CONTENT',  units='g', type2d='levgrnd', &
-         avgflag='A', long_name='Mass of salt in soil layer', &
-         ptr_col=this%salt_content)
+   this%h2osfc_tide(begc:endc) = spval
+   call hist_addfld1d (fname='H2OSFC_TIDE',  units='mm H2O',  &
+      avgflag='A', long_name='Tide height above soil surface', &
+      ptr_col=this%h2osfc_tide)
 
    !this%osm_inhib(begc:endc) = spval
    ! call hist_addfld1d (fname='OSM_INHIB',  units=' ',  &
@@ -1719,7 +1719,7 @@ contains
        this%h2osfc(c)                 = 0._r8
        this%h2ocan(c)                 = 0._r8
        this%salinity(c)             = 0._r8 !TAO added 5/19/2020
-       this%salt_content(c,:)         = 0._r8
+       this%h2osfc_tide(c)          = 0._r8
        this%frac_h2osfc(c)            = 0._r8
        this%frac_h2osfc_act(c)        = 0._r8
        this%h2orof(c)                 = 0._r8
@@ -5942,6 +5942,12 @@ contains
          avgflag='A', long_name='sub-surface drainage', &
          ptr_col=this%qflx_drain, c2l_scale_type='urbanf')
 
+
+    this%qflx_drain_vr(begc:endc, :) = 0.0_r8
+    call hist_addfld2d (fname='QDRAI_VR',  units='mm/s', type2d='levgrnd', &
+          avgflag='A', long_name='Sub-surface drainage by layer', &
+          ptr_col=this%qflx_drain_vr)
+
 #if (defined HUM_HOL || defined MARSH)
     this%qflx_lat_aqu(begc:endc) = spval
     call hist_addfld1d (fname='QFLX_LAT_AQU',  units='mm/s',  &
@@ -5960,6 +5966,7 @@ contains
          avgflag='A', long_name='Tidal flux between marsh columns', &
          ptr_col=this%qflx_tide)
 #endif 
+
 
    this%qflx_adv(begc:endc,:) = spval
    call hist_addfld2d (fname='QFLX_ADV',  units='mm/s', type2d='levgrnd', &
@@ -6652,7 +6659,7 @@ contains
          this%ch4flux(begc:endc) = spval
          call hist_addfld1d (fname='CH4FLUX_ALQUIMIA', units='gC/m^2/s', &
                avgflag='A', long_name='total methane flux', &
-               ptr_col=this%hr,default='inactive')
+               ptr_col=this%ch4flux,default='inactive')
        endif     
 
        this%hr(begc:endc) = spval
