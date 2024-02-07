@@ -308,6 +308,9 @@ module pftvarcon
   real(r8), allocatable :: crit_gdd1(:)        !Critical GDD intercept
   real(r8), allocatable :: crit_gdd2(:)        !Critical GDD slope with MAT
   real(r8), allocatable :: br_xr(:)            !Base rate for excess respiration
+  real(r8), allocatable :: br_mr_pft(:)         !Base rate for maintenance respiration pft specific
+  real(r8), allocatable :: q10_mr_pft(:)        !Q10 for maintenance respiration pft specific
+  real(r8)              :: q10_mrtmp
   real(r8)              :: tc_stress           !Critial temperature for moisture stress
   real(r8), allocatable :: vcmax_np1(:)        !vcmax~np relationship coefficient
   real(r8), allocatable :: vcmax_np2(:)        !vcmax~np relationship coefficient
@@ -693,6 +696,8 @@ contains
     allocate( mbbopt             (0:mxpft) )
     allocate( nstor              (0:mxpft) )
     allocate( br_xr              (0:mxpft) )
+    allocate( br_mr_pft          (0:mxpft) )
+    allocate( q10_mr_pft          (0:mxpft) )
     allocate( crit_gdd1          (0:mxpft) )
     allocate( crit_gdd2          (0:mxpft) )
     ! Ground cover for soil erosion
@@ -1157,7 +1162,6 @@ contains
    endif
    call ncd_io('sfcflow_ratescale',sfcflow_ratescale, 'read', ncid, readvar=readv, posNOTonfile=.true.)
    if (.not. readv) sfcflow_ratescale = 7.0e-5_r8 ! Probably better to have default be zero for safety
-
    ! salinity parameters
    call ncd_io('sal_threshold', sal_threshold(0:npft-1), 'read', ncid, readvar=readv, posNOTonfile=.true.)
    if ( .not. readv ) sal_threshold(:) = 50.0_r8 !placeholder value for now-update with more accurate -SLL
@@ -1173,41 +1177,40 @@ contains
    if ( .not. readv ) floodf(:) = 1.0_r8 
 #endif
 
-    call ncd_io('phen_a', phen_a, 'read', ncid, readvar=readv, posNOTonfile=.true.)
+!    call ncd_io('phen_a', phen_a, 'read', ncid, readvar=readv, posNOTonfile=.true.)
 !    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
-    call ncd_io('phen_b', phen_b, 'read', ncid, readvar=readv, posNOTonfile=.true.)
+!    call ncd_io('phen_b', phen_b, 'read', ncid, readvar=readv, posNOTonfile=.true.)
 !    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
-    call ncd_io('phen_c', phen_c, 'read', ncid, readvar=readv, posNOTonfile=.true.)
+!    call ncd_io('phen_c', phen_c, 'read', ncid, readvar=readv, posNOTonfile=.true.)
 !    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
-    call ncd_io('phen_topt', phen_topt, 'read', ncid, readvar=readv, posNOTonfile=.true.)
+!    call ncd_io('phen_topt', phen_topt, 'read', ncid, readvar=readv, posNOTonfile=.true.)
 !    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
-    call ncd_io('phen_fstar', phen_fstar, 'read', ncid, readvar=readv, posNOTonfile=.true.)
+!    call ncd_io('phen_fstar', phen_fstar, 'read', ncid, readvar=readv, posNOTonfile=.true.)
 !    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
-    call ncd_io('phen_cstar', phen_cstar, 'read', ncid, readvar=readv, posNOTonfile=.true.)
+!    call ncd_io('phen_cstar', phen_cstar, 'read', ncid, readvar=readv, posNOTonfile=.true.)
 !    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
-    call ncd_io('phen_tforce', phen_tforce, 'read', ncid, readvar=readv, posNOTonfile=.true.)
+!    call ncd_io('phen_tforce', phen_tforce, 'read', ncid, readvar=readv, posNOTonfile=.true.)
 !    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
-    call ncd_io('phen_tchil', phen_tchil, 'read', ncid, readvar=readv, posNOTonfile=.true.)
+!    call ncd_io('phen_tchil', phen_tchil, 'read', ncid, readvar=readv, posNOTonfile=.true.)
 !    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
-    call ncd_io('phen_pstart', phen_pstart, 'read', ncid, readvar=readv, posNOTonfile=.true.)
+!    call ncd_io('phen_pstart', phen_pstart, 'read', ncid, readvar=readv, posNOTonfile=.true.)
 !    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
-    call ncd_io('phen_tb', phen_tb, 'read', ncid, readvar=readv, posNOTonfile=.true.)
+!    call ncd_io('phen_tb', phen_tb, 'read', ncid, readvar=readv, posNOTonfile=.true.)
 !    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
-    call ncd_io('phen_ycrit', phen_ycrit, 'read', ncid, readvar=readv, posNOTonfile=.true.)
+!    call ncd_io('phen_ycrit', phen_ycrit, 'read', ncid, readvar=readv, posNOTonfile=.true.)
 !    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
-    call ncd_io('phen_spring', phen_spring, 'read', ncid, readvar=readv, posNOTonfile=.true.)
-    if ( .not. readv) phen_spring = 0._r8
-    call ncd_io('phen_autumn', phen_autumn, 'read', ncid, readvar=readv, posNOTonfile=.true.)
-    if ( .not. readv) phen_autumn = 0._r8
-    call ncd_io('phen_tbase', phen_tbase, 'read', ncid, readvar=readv, posNOTonfile=.true.)
+!    call ncd_io('phen_spring', phen_spring, 'read', ncid, readvar=readv, posNOTonfile=.true.)
+!    if ( .not. readv) phen_spring = 0._r8
+!    call ncd_io('phen_autumn', phen_autumn, 'read', ncid, readvar=readv, posNOTonfile=.true.)
+!    if ( .not. readv) phen_autumn = 0._r8
+!    call ncd_io('phen_tbase', phen_tbase, 'read', ncid, readvar=readv, posNOTonfile=.true.)
 !    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
-    call ncd_io('phen_tc', phen_tc, 'read', ncid, readvar=readv, posNOTonfile=.true.)
+!    call ncd_io('phen_tc', phen_tc, 'read', ncid, readvar=readv, posNOTonfile=.true.)
 !    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
-    call ncd_io('crit_dayl', phen_crit_dayl, 'read', ncid, readvar=readv, posNOTonfile=.true.)
+!    call ncd_io('crit_dayl', phen_crit_dayl, 'read', ncid, readvar=readv, posNOTonfile=.true.)
 !    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft ! data'//errMsg(__FILE__,__LINE__))
 
 !endif
-
     !if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
     call ncd_io('fnr', fnr(0:npft-1), 'read', ncid, readvar=readv, posNOTonfile=.true.)
     if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
@@ -1249,6 +1252,13 @@ contains
     if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
     call ncd_io('br_xr', br_xr(0:npft-1), 'read', ncid, readvar=readv, posNOTonfile=.true.)
     if (.not. readv) br_xr(:) = 0._r8
+#if (defined HUM_HOL)
+    call ncd_io('br_mr_pft', br_mr_pft(0:npft-1), 'read', ncid, readvar=readv, posNOTonfile=.true.)
+    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
+    call ncd_io('q10_mr_pft', q10_mr_pft(0:npft-1), 'read', ncid, readvar=readv, posNOTonfile=.true.)
+    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
+    !q10_mr(:) = q10_mrtmp 
+#endif
     call ncd_io('crit_gdd1', crit_gdd1, 'read', ncid, readvar=readv, posNOTonfile=.true.)
     if (.not. readv) crit_gdd1(:) = 4.8_r8
     call ncd_io('crit_gdd2', crit_gdd2, 'read', ncid, readvar=readv, posNOTonfile=.true.)

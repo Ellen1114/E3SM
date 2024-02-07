@@ -178,7 +178,11 @@ contains
    dayspyr = get_days_per_year( )
    do g = bounds%begg,bounds%endg
       ig = ig+1
+#if (defined HUM_HOL)
+      atm2lnd_vars%forc_pdep_grc(g) = 0.03 / (secspday * dayspyr)
+#else
       atm2lnd_vars%forc_pdep_grc(g) = sdat%avs(1)%rAttr(1,ig) / (secspday * dayspyr)
+#endif
    end do
    
  end subroutine pdep_interp

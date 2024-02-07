@@ -2484,14 +2484,14 @@ module VegetationDataType
                 this%leafc_storage(p) = 0._r8
              else
                 if (veg_vp%evergreen(veg_pp%itype(p)) == 1._r8) then
-                   this%leafc(p)         = 1._r8 * ratio
+                   this%leafc(p)         = 20._r8 * ratio
                    this%leafc_storage(p) = 0._r8
                 else if (iscft(veg_pp%itype(p))) then ! prognostic crop types
                    this%leafc(p) = 0._r8
                    this%leafc_storage(p) = 0._r8
                 else
                    this%leafc(p) = 0._r8
-                   this%leafc_storage(p) = 1._r8 * ratio
+                   this%leafc_storage(p) = 20._r8 * ratio
                 end if
              end if
              this%leafc_xfer(p) = 0._r8
@@ -3490,7 +3490,7 @@ module VegetationDataType
     !--------------------------------
     ! the spinup_state variable is being written by the column-level carbon state restart
     ! routine, so only need to handle the reading part here
-    if (carbon_type == 'c12'  .or. carbon_type == 'c14') then
+    if (carbon_type == 'c12'  .or. carbon_type == 'c14' .or. carbon_type == 'c13') then
         if (flag == 'read') then
            call restartvar(ncid=ncid, flag=flag, varname='spinup_state', xtype=ncd_int,  &
                 long_name='Spinup state of the model that wrote this restart file: ' &
@@ -8288,8 +8288,6 @@ module VegetationDataType
                   this%xsmrpool_turnover(p)
           end if
        end if
-
-
 
        ! net primary production (NPP)
        this%npp(p) = &

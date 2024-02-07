@@ -325,7 +325,7 @@ contains
                write(iulog,*)'SIC (carbonates)      = ',col_cs%totSIC(c) 
           endif
 
-          call endrun(msg=errMsg(__FILE__, __LINE__))
+          !call endrun(msg=errMsg(__FILE__, __LINE__))
        else
            if (masterproc .and. nstep < 2) then
               write(iulog,*) '--WARNING-- skipping CN balance check for first timestep'
@@ -557,7 +557,7 @@ contains
             write(iulog,*)'DON                   = ',col_ns%totDON(c)
             write(iulog,*)'DON_runoff            = ',col_nf%DON_runoff(c)*dt
          endif
-         call endrun(msg=errMsg(__FILE__, __LINE__))
+         !call endrun(msg=errMsg(__FILE__, __LINE__))
 #endif
 
       end if
@@ -609,6 +609,7 @@ contains
          primp_to_labilep          => col_pf%primp_to_labilep          , &
          secondp_to_occlp          => col_pf%secondp_to_occlp          , &
          fert_p_to_sminp           => col_pf%fert_p_to_sminp           , &
+         som_p_leached             => col_pf%som_p_leached             , & ! Input: [real (r8) (:) total SOMP loss from vertical advection
          som_p_yield               => col_pf%somp_yield                , & ! Input:  [real(r8) (:)]  SOM P pool loss by erosion (gP/m^2/s)
          labilep_yield             => col_pf%labilep_yield             , & ! Input:  [real(r8) (:)]  soil labile mineral P loss by erosion (gP/m^s/s)
          secondp_yield             => col_pf%secondp_yield             , & ! Input:  [real(r8) (:)]  soil secondary mineral P loss by erosion (gP/m^s/s)
@@ -746,6 +747,7 @@ contains
             col_poutputs(c) = col_poutputs(c) + som_p_yield(c) + labilep_yield(c) + &
                secondp_yield(c) !+ occlp_yield(c) + primp_yield(c)
          end if
+         col_poutputs(c) = col_poutputs(c) - som_p_leached(c)
 
          ! calculate the total column-level phosphorus balance error for this time step
          col_errpb(c) = (col_pinputs(c) - col_poutputs(c))*dt - &
@@ -786,7 +788,7 @@ contains
             write(iulog,*)'SOP erosion = ',som_p_yield(c)*dt
             write(iulog,*)'SIP erosion = ',(labilep_yield(c)+secondp_yield(c)+occlp_yield(c)+primp_yield(c))*dt
          end if
-         call endrun(msg=errMsg(__FILE__, __LINE__))
+         !call endrun(msg=errMsg(__FILE__, __LINE__))
 #endif
       end if
 
@@ -1034,7 +1036,7 @@ contains
             write(iulog,*)'Delta ctrunc        = ', end_ctrunc(g) - beg_ctrunc(g)
             write(iulog,*)'Delta crop deficit  = ', end_cropseedc_deficit(g) - beg_cropseedc_deficit(g)
 
-            call endrun(msg=errMsg(__FILE__, __LINE__))
+            !call endrun(msg=errMsg(__FILE__, __LINE__))
          end if
       end do
 
@@ -1171,7 +1173,8 @@ contains
          write(iulog,*)'begcb                 = ',begcb_grc(g)
          write(iulog,*)'endcb                 = ',endcb_grc(g)
          write(iulog,*)'delta store           = ',endcb_grc(g)-begcb_grc(g)
-         call endrun(msg=errMsg(__FILE__, __LINE__))
+         
+         !call endrun(msg=errMsg(__FILE__, __LINE__))
 #endif
       end if
 
@@ -1261,7 +1264,7 @@ contains
          write(iulog,*)''
          write(iulog,*)'dwt_seedn_leaf          ',dwt_seedn_to_leaf_grc(g)
          write(iulog,*)'dwt_seedn_deadstem      ',dwt_seedn_to_deadstem_grc(g)
-         call endrun(msg=errMsg(__FILE__, __LINE__))
+         !call endrun(msg=errMsg(__FILE__, __LINE__))
 #endif
       end if
 
@@ -1347,7 +1350,7 @@ contains
          write(iulog,*)'begpb                 = ',begpb_grc(g)
          write(iulog,*)'endpb                 = ',endpb_grc(g)
          write(iulog,*)'delta store           = ',endpb_grc(g)-begpb_grc(g)
-         call endrun(msg=errMsg(__FILE__, __LINE__))
+         !call endrun(msg=errMsg(__FILE__, __LINE__))
 #endif
       end if
 

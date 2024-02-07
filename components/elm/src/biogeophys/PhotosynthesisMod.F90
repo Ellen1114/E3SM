@@ -370,6 +370,10 @@ contains
          flnr          => veg_vp%flnr                          , & ! Input:  [real(r8) (:)   ]  fraction of leaf N in the Rubisco enzyme (gN Rubisco / gN leaf)
          fnitr         => veg_vp%fnitr                         , & ! Input:  [real(r8) (:)   ]  foliage nitrogen limitation factor (-)
          slatop        => veg_vp%slatop                        , & ! Input:  [real(r8) (:)   ]  specific leaf area at top of canopy, projected area basis [m^2/gC]
+#if defined (HUM_HOL)
+         br_mr         => veg_vp%br_mr_pft                     , &
+         q10_mr        => veg_vp%q10_mr_pft                    , &
+#endif
 
          forc_pbot     => top_as%pbot                              , & ! Input:  [real(r8) (:)   ]  atmospheric pressure (Pa)
 
@@ -734,6 +738,11 @@ contains
             ! Then scale this value at the top of the canopy for canopy depth
 
             lmr25top = 2.525e-6_r8 * (ParamsShareInst%Q10_mr ** ((25._r8 - 20._r8)/10._r8))
+#if (defined HUM_HOL)
+            lmr25top = br_mr(veg_pp%itype(p)) * q10_mr(veg_pp%itype(p)) **((25._r8 - 20._r8)/10._r8)
+#else
+            lmr25top = 2.525e-6_r8 * (ParamsShareInst%Q10_mr ** ((25._r8 - 20._r8)/10._r8))
+#endif
             lmr25top = lmr25top * lnc(p) / 12.e-06_r8
          else
             ! Leaf maintenance respiration in proportion to vcmax25top
@@ -772,7 +781,7 @@ contains
             lmr25 = lmr25top * nscaler
             if (c3flag(p)) then
 #if (defined HUM_HOL)
-               lmr_z(p,iv) = lmr25 * ParamsShareInst%Q10_mr**((t_veg(p)-(tfrz+25._r8))/10._r8)
+               lmr_z(p,iv) = lmr25 * q10_mr(veg_pp%itype(p))**((t_veg(p)-(tfrz+25._r8))/10._r8)
 #else
                lmr_z(p,iv) = lmr25 * ft(t_veg(p), lmrha) * fth(t_veg(p), lmrhd, lmrse, lmrc)
 #endif
@@ -849,17 +858,25 @@ contains
          gb_mol(p) = gb * cf
 
          !Dessication and submergence scalaers for moss photosynthesis
-         !if (veg_pp%itype(p) == 12)then
-         !   wcscaler = (-0.656_r8 + 1.654_r8 *log10(h2o_moss_wc (p)))
-         !   !DMR 05/11/17 - add scaler for submergence effect
-         !   !wcscaler = wcscaler * (1.0_r8 - min(h2osfc(c),50.0_r8)/50.0_r8)
-         !   wcscaler = max(0._r8, min(1.0_r8, wcscaler))
-         !endif
+#if (defined HUM_HOL)
+         if (veg_pp%itype(p) == 12)then
+            if (h2o_moss_wc(p) > 0) then 
+              wcscaler = (-0.656_r8 + 1.654_r8 *log10(h2o_moss_wc (p)))
+            else
+              wcscaler = 0._r8
+            end if
+              !DMR 05/11/17 - add scaler for submergence effect
+            !wcscaler = wcscaler * (1.0_r8 - min(h2osfc(c),50.0_r8)/50.0_r8)
+            wcscaler = max(0._r8, min(1.0_r8, wcscaler))
+         endif
+#endif
 
          ! Loop through canopy layers (above snow). Only do calculations if daytime
          do iv = 1, nrad(p)
 
-           !if (veg_pp%itype(p) == 12) lmr_z(p,iv) = lmr_z(p,iv) * wcscaler
+#if (defined HUM_HOL)
+           if (veg_pp%itype(p) == 12) lmr_z(p,iv) = lmr_z(p,iv) * wcscaler
+#endif
            if (par_z(p,iv) <= 0._r8) then           ! night time
 
                ac(p,iv) = 0._r8
@@ -1610,14 +1627,20 @@ contains
       ag(p,iv) = min(r1,r2)
 
       !Dessication and submergence effects for moss PFT
-      !if (veg_pp%itype(p) == 12)then
-      !   wcscaler = (-0.656_r8 + 1.654_r8 *log10(h2o_moss_wc (p)))
-      !   !DMR 05/11/17 - add scaler for submergence effect
-      !   !wcscaler = wcscaler * (1.0_r8 - min(h2osfc(c),50.0_r8)/50.0_r8)
-      !   wcscaler = max(0._r8, min(1.0_r8, wcscaler))
-      !   ag(p,iv) = ag(p,iv) * wcscaler
-      !   !if (h2osfc(c) > 0) print*, 'AG', c, h2osfc(c), wcscaler
-      !endif
+#if (defined HUM_HOL)
+      if (veg_pp%itype(p) == 12)then
+         if (h2o_moss_wc(p) > 0) then 
+           wcscaler = (-0.656_r8 + 1.654_r8 *log10(h2o_moss_wc (p)))
+         else
+           wcscaler = 0._r8
+         end if
+         !DMR 05/11/17 - add scaler for submergence effect
+         !wcscaler = wcscaler * (1.0_r8 - min(h2osfc(c),50.0_r8)/50.0_r8)
+         wcscaler = max(0._r8, min(1.0_r8, wcscaler))
+         ag(p,iv) = ag(p,iv) * wcscaler
+         !if (h2osfc(c) > 0) print*, 'AG', c, h2osfc(c), wcscaler
+      endif
+#endif
 
       ! Net photosynthesis. Exit iteration if an < 0
 
@@ -1923,6 +1946,10 @@ contains
          stem_leaf     => veg_vp%stem_leaf                         , & ! allocation parameter: new stem c per new leaf C (gC/gC)
          froot_leaf     => veg_vp%froot_leaf                         , & ! allocation parameter: new fine root C per new leaf C (gC/gC)
          croot_stem     => veg_vp%croot_stem                         , & ! allocation parameter: new coarse root C per new stem C (gC/gC)
+#if defined (HUM_HOL)
+         br_mr      => veg_vp%br_mr_pft                          ,&       
+         q10_mr     => veg_vp%q10_mr_pft                         ,&
+#endif
          forc_pbot  => top_as%pbot                           , & ! Input:  [real(r8) (:)   ]  atmospheric pressure (Pa)
 
          t_veg         => veg_es%t_veg             , & ! Input:  [real(r8) (:)   ]  vegetation temperature (Kelvin)
@@ -2333,7 +2360,11 @@ contains
             !
             ! Then scale this value at the top of the canopy for canopy depth
 
+#if defined (HUM_HOL)
+            lmr25top = br_mr(veg_pp%itype(p)) * q10_mr(veg_pp%itype(p)) ** ((25._r8 - 20._r8)/10._r8)
+#else
             lmr25top = 2.525e-6_r8 * (ParamsShareInst%Q10_mr ** ((25._r8 - 20._r8)/10._r8))
+#endif
             lmr25top = lmr25top * lnc(p) / 12.e-06_r8
 
          else

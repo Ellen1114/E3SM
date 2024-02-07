@@ -317,6 +317,7 @@ contains
      use abortutils       , only : endrun
 #if (defined HUM_HOL || defined MARSH)
      use pftvarcon        , only : humhol_ht, humhol_dist, hum_frac, qflx_h2osfc_surfrate
+      use elm_instMod     , only : atm2lnd_vars
 #endif
      use elm_time_manager , only : get_step_size, get_nstep, get_curr_date, get_curr_time
 #if defined MARSH
@@ -384,9 +385,10 @@ contains
      integer  :: jwt(bounds%begc:bounds%endc)
      integer  :: yr, mon, day, tod               !
      integer  :: days, seconds               !
-     integer  :: ii
+     integer  :: ii, g
    !   real(r8) :: h2osfc_tide
      real(r8) :: h2osfc_before
+     logical :: obs_zwt_forcing = .true.    !use observed water table foring (HUMHOL option) 
      !-----------------------------------------------------------------------
 
      associate(                                                    &
@@ -739,17 +741,24 @@ contains
                  zwt_ho = zwt_ho - h2osfc(2)/1000._r8   !DMR 4/29/13
                end if
                !DMR 12/4/2015
-               if (icefrac(1,min(jwt(1)+1,nlevbed)) .ge. 0.90_r8 .or. &
-                       icefrac(2,min(jwt(2)+1,nlevbed)) .ge. 0.90_r8) then
+               if (icefrac(1,min(jwt(1)+1,nlevbed)) .ge. 0.01_r8 .or. &
+                       icefrac(2,min(jwt(2)+1,nlevbed)) .ge. 0.01_r8) then
                  !turn off lateral transport if any ice is present at or below,
                  !changed from 0.01 to 0.90 TAO 6/4/2021
                  !water table
                  qflx_lat_aqu(:) = 0._r8
                else
-                 qflx_lat_aqu(1) =  2._r8/(1._r8/ka_hu+1._r8/ka_ho) * (zwt_hu-zwt_ho- &
-                     humhol_ht) / humhol_dist * sqrt(hol_frac/hum_frac)
-                 qflx_lat_aqu(2) = -2._r8/(1._r8/ka_hu+1._r8/ka_ho) * (zwt_hu-zwt_ho- &
-                     humhol_ht) / humhol_dist * sqrt(hum_frac/hol_frac)
+                 if (obs_zwt_forcing) then
+                   g = col_pp%gridcell(c)
+           
+                   qflx_lat_aqu(1) = ka_hu * (zwt_hu-(atm2lnd_vars%forc_zwt_not_downscaled_grc(g)+humhol_ht)) / 1.0_r8
+                   qflx_lat_aqu(2) = ka_ho * (zwt_ho-atm2lnd_vars%forc_zwt_not_downscaled_grc(g)) / 1.0_r8
+                 else
+                   qflx_lat_aqu(1) =  2._r8/(1._r8/ka_hu+1._r8/ka_ho) * (zwt_hu-zwt_ho- &
+                      humhol_ht) / humhol_dist * sqrt(hol_frac/hum_frac)
+                   qflx_lat_aqu(2) = -2._r8/(1._r8/ka_hu+1._r8/ka_ho) * (zwt_hu-zwt_ho- &
+                      humhol_ht) / humhol_dist * sqrt(hum_frac/hol_frac)
+                 endif
                endif
             endif
 #endif
@@ -1172,8 +1181,17 @@ contains
    
                    qflx_lat_aqu_layer(c,j)=min(qflx_lat_aqu_tot,(s_y*(zwt(c) - zi(c,j-1))*1.e3))
                    qflx_lat_aqu_layer(c,j)=max(qflx_lat_aqu_layer(c,j),0._r8)
-                   h2osoi_liq(c,j) = h2osoi_liq(c,j) + qflx_lat_aqu_layer(c,j)
-                   qflx_lat_aqu_tot = qflx_lat_aqu_tot - qflx_lat_aqu_layer(c,j)
+                   !h2osoi_liq(c,j) = h2osoi_liq(c,j) + qflx_lat_aqu_layer(c,j)
+                   !qflx_lat_aqu_tot = qflx_lat_aqu_tot - qflx_lat_aqu_layer(c,j)
+
+                   h2osoi_vol(c,j) = h2osoi_liq(c,j)/(dz(c,j)*denh2o) &
+                     + h2osoi_ice(c,j)/(dz(c,j)*denice)
+                   !Don't add water to a saturated layer
+                   if (h2osoi_vol(c,j)/watsat(c,j) < 1.0_r8) then
+                     h2osoi_liq(c,j) = h2osoi_liq(c,j) + qflx_lat_aqu_layer(c,j)
+                     qflx_lat_aqu_tot = qflx_lat_aqu_tot - qflx_lat_aqu_layer(c,j)
+                   end if
+
                    !new code test DMR 4/29/13
                    if(s_y > 0._r8) zwt(c) = zwt(c) - qflx_lat_aqu_layer(c,j)/s_y/1000._r8
                    if (qflx_lat_aqu_tot <= 0.) then
@@ -1205,6 +1223,11 @@ contains
                    qflx_lat_aqu_layer(c,j)=max(qflx_lat_aqu_tot,-(s_y*(zi(c,j) - zwt(c))*1.e3))
                    qflx_lat_aqu_layer(c,j)=min(qflx_lat_aqu_layer(c,j),0._r8)
                    h2osoi_liq(c,j) = h2osoi_liq(c,j) + qflx_lat_aqu_layer(c,j)
+                   !Remove from ice if there is no liquid
+                   if (h2osoi_liq(c,j) < 0 .and. h2osoi_ice(c,j) > -1.0_r8*qflx_lat_aqu_layer(c,j)) then 
+                     h2osoi_ice(c,j) = h2osoi_ice(c,j) + h2osoi_liq(c,j)
+                     h2osoi_liq(c,j) = 0._r8
+                   end if
                    qflx_lat_aqu_tot = qflx_lat_aqu_tot - qflx_lat_aqu_layer(c,j)
    
                    if (qflx_lat_aqu_tot >= 0.) then

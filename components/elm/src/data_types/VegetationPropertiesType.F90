@@ -146,6 +146,8 @@ module VegetationPropertiesType
      real(r8), pointer :: mbbopt(:)        => null()   !Ball-Berry stomatal conductance slope
      real(r8), pointer :: nstor(:)         => null()   !Nitrogen storage pool timescale
      real(r8), pointer :: br_xr(:)         => null()   !Base rate for excess respiration
+     real(r8), pointer :: br_mr_pft(:)     => null()   !Base rate for maintanence respiration
+     real(r8), pointer :: q10_mr_pft(:)    => null()   !Q10 for maintanence respiration
      real(r8), pointer :: crit_gdd1(:) => null()   !Deciduous pheonlogy critical GDD intercept
      real(r8), pointer :: crit_gdd2(:) => null()   !Deciduous pheonlogy critical GDD slope
      real(r8), pointer :: tc_stress        => null()   !Critial temperature for moisture stress
@@ -205,7 +207,8 @@ contains
     use pftvarcon , only : leafcp_obs, frootcp_obs, livewdcp_obs, deadwdcp_obs
     use pftvarcon , only : fnr, act25, kcha, koha, cpha, vcmaxha, jmaxha, tpuha
     use pftvarcon , only : lmrha, vcmaxhd, jmaxhd, tpuhd, lmrse, qe, theta_cj
-    use pftvarcon , only : bbbopt, mbbopt, nstor, br_xr, tc_stress, lmrhd, crit_gdd1, crit_gdd2
+    use pftvarcon , only : bbbopt, mbbopt, nstor, br_xr, br_mr_pft, q10_mr_pft, tc_stress, 
+    use pftvarcon , only : lmrhd, crit_gdd1, crit_gdd2
     use pftvarcon , only : climatezone, nonvascular, graminoid, iscft,needleleaf, nfixer
     use pftvarcon , only : sal_threshold, KM_salinity, osm_inhib, sal_opt, sal_tol, floodf
     !
@@ -327,6 +330,8 @@ contains
     allocate( this%mbbopt(0:numpft))                             ; this%mbbopt(:)                =spval
     allocate( this%nstor(0:numpft))                              ; this%nstor(:)                 =spval
     allocate( this%br_xr(0:numpft))                              ; this%br_xr(:)                 =spval
+    allocate( this%br_mr_pft(0:numpft))                          ; this%br_mr_pft(:)             =spval
+    allocate( this%q10_mr_pft(0:numpft))                         ; this%q10_mr_pft(:)            =spval
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
     allocate(this%km_decomp_nh4)
@@ -455,6 +460,10 @@ contains
        this%iscft(m)        = iscft(m)
        this%needleleaf(m)   = needleleaf(m)
        this%nfixer(m)       = nfixer(m)
+#if (defined HUM_HOL)
+       this%br_mr_pft(m)    = br_mr_pft(m)
+       this%q10_mr_pft(m)   = q10_mr_pft(m)
+#endif
        this%crit_gdd1(m)    = crit_gdd1(m)
        this%crit_gdd2(m)    = crit_gdd2(m)
 

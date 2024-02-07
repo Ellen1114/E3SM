@@ -624,6 +624,8 @@ contains
             ! Determine rate of recovery for xsmrpool deficit
 
             xsmrpool_recover(p) = -xsmrpool(p)/(dayscrecover*secspday)
+            !DMR note - Modification from orignial code to use cpool
+
             !if (xsmrpool_recover(p) < availc(p)) then
             !   ! available carbon reduced by amount for xsmrpool recovery
             !   availc(p) = availc(p) - xsmrpool_recover(p)
@@ -3795,7 +3797,11 @@ contains
                      nuptake_prof(c,j) = sminn_vr_loc(c,j) / sminn_tot(c) &
                         *(nfixation_prof(c,j)*dzsoi_decomp(j))         ! weighted by froot fractions in annual max. active layers
                   else
+#if (defined HUM_HOL)
+                     nuptake_prof(c,j) = nfixation_prof(c,j)
+#else
                      nuptake_prof(c,j) = sminn_vr_loc(c,j) / sminn_tot(c)   !original:  nuptake_prof(c,j) = sminn_vr(c,j) / sminn_tot(c)
+#endif
                   end if
                else
                   nuptake_prof(c,j) = nfixation_prof(c,j)
@@ -3849,7 +3855,11 @@ contains
                c = filter_soilc(fc)
                !!! add P demand calculation
                if (solutionp_tot(c)  >  0.) then
+#if (defined HUM_HOL)
+                  puptake_prof(c,j) = nfixation_prof(c,j)
+#else
                   puptake_prof(c,j) = solutionp_vr(c,j) / solutionp_tot(c)
+#endif
                else
                   puptake_prof(c,j) = nfixation_prof(c,j)      ! need modifications
                endif

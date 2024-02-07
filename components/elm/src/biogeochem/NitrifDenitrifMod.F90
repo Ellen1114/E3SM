@@ -226,7 +226,12 @@ contains
 
       organic_max = ParamsShareInst%organic_max
 
+#if (defined HUM_HOL)
+      pH(bounds%begc:bounds%endc) = 4.0
+#else
       pH(bounds%begc:bounds%endc) = 6.5  !!! set all soils with the same pH as placeholder here
+#endif
+
       co2diff_con(1) =   0.1325_r8
       co2diff_con(2) =   0.0009_r8
 

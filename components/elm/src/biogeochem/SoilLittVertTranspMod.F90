@@ -34,7 +34,11 @@ module SoilLittVertTranspMod
   !$acc declare create(SoilLittVertTranspParamsInst)
 
   !
+#if (defined HUM_HOL)
+  real(r8), public :: som_adv_flux =  0.0004_r8 / (86400_r8 * 365_r8)    ! m/s advection - long term peat accumulation rate at SPR
+#else
   real(r8), public :: som_adv_flux =  0._r8    ! m/s advection
+#endif
   !$acc declare copyin(som_adv_flux)
   real(r8), public :: max_depth_cryoturb = 3._r8   ! (m) this is the maximum depth of cryoturbation
   !$acc declare copyin(max_depth_cryoturb)
@@ -74,7 +78,7 @@ contains
     ! FIX(SPM,032414) - can't be pulled out since division makes things not bfb
     SoilLittVertTranspParamsInst%som_diffus = 1e-4_r8 / (secspday * 365._r8)
 #if (defined HUM_HOL)
-    SoilLittVertTranspParamsInst%som_diffus = 5e-4_r8 / (secspday * 365._r8)
+    SoilLittVertTranspParamsInst%som_diffus = 0e-4_r8 / (secspday * 365._r8)
 #elif (defined MARSH)
     SoilLittVertTranspParamsInst%som_diffus = 5e-4_r8 / (secspday * 365._r8)
 #endif
@@ -216,8 +220,11 @@ contains
             elseif (  max(altmax(c), altmax_lastyear(c)) > 0._r8 ) then
                ! constant advection, constant diffusion
                do j = 1,nlevdecomp+1
-                  som_adv_coef(c,j) = som_adv_flux
-                  som_diffus_coef(c,j) = som_diffus
+                 som_adv_coef(c,j) = som_adv_flux
+#if (defined HUM_HOL)
+                 if (c == 2) som_adv_coef(c,j) = som_adv_flux*1.5_r8
+#endif
+                 som_diffus_coef(c,j) = som_diffus
                end do
             else
                ! completely frozen soils--no mixing

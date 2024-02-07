@@ -151,6 +151,9 @@ contains
       do c = bounds%begc, bounds%endc
          g = col_pp%gridcell(c)
          ndep_to_sminn(c) = forc_ndep(g)
+#if (defined HUM_HOL)
+         ndep_to_sminn(c) = 0.57_r8 / (86400_r8 * 365_r8)
+#endif
       end do
 
     end associate
@@ -242,6 +245,12 @@ contains
                c = filter_soilc(fc)         
                ! B. Sulman: Loop through patches. Nfix is weighted average of value for each PFT's parameters
                t = 0.0_r8
+#if (defined HUM_HOL)
+               if (col_lag_npp(c) /= spval) then
+                 !need to put npp in units of gC/m2/yr here first
+                 t = (2.8_r8 * (1._r8 - exp(-0.003_r8 * col_lag_npp(c)*(secspday*dayspyr))))/(secspday*dayspyr)
+                 nfix_to_sminn(c) = max(0._r8,t)
+#else
                if (col_lag_npp(c) /= spval) then
                   total_weight = 0.0_r8  ! To correct for inactive and unveg cells
                   do p = col_pp%pfti(c), col_pp%pftf(c)
@@ -258,6 +267,7 @@ contains
                    else
                        nfix_to_sminn(c) = 0._r8
                    endif
+#endif
                else
                    nfix_to_sminn(c) = 0._r8
                endif

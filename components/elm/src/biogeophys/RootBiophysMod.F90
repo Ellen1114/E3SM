@@ -13,6 +13,7 @@ module RootBiophysMod
   public :: init_vegrootfr
   public :: init_rootprof
   integer, parameter :: zeng_2001_root = 0 !the zeng 2001 root profile function
+  integer, parameter :: spruce_root = 1    !the spruce linear root profile 
 
   integer :: root_prof_method              !select the type of root profile parameterization   
   !-------------------------------------------------------------------------------------- 
@@ -27,6 +28,9 @@ contains
     implicit none
 
     root_prof_method = zeng_2001_root
+#if (defined HUM_HOL)
+    root_prof_method = spruce_root
+#endif
 
   end subroutine init_rootprof
 
@@ -60,18 +64,20 @@ contains
     select case (root_prof_method)
     case (zeng_2001_root)
        rootfr(bounds%begp:bounds%endp, 1 : nlevsoi) = zeng2001_rootfr(bounds, nlevsoi, nlev2bed)
+    case (spruce_root)
+       rootfr(bounds%begp:bounds%endp, 1 : nlevsoi) = spruce_rootfr(bounds,nlevsoi, nlev2bed)
 
        !case (jackson_1996_root)
        !jackson root, 1996, to be defined later
-       !rootfr(bounds%begp:bounds%endp, 1 : ubj) = jackson1996_rootfr(bounds, ubj, pcolumn, ivt, zi)
+       !rootfr(bounds%begp:bounds%endp, 1 : ubj) = jackson1996_rootfr(bounds,
+       !ubj, pcolumn, ivt, zi)
        !case (schenk_jackson_2002_root)
        !schenk and Jackson root, 2002, to be defined later
-       !rootfr(bounds%begp:bounds%endp, 1 : ubj) = schenk2002_rootfr(bounds, ubj, pcolumn, ivt, zi)        
+       !rootfr(bounds%begp:bounds%endp, 1 : ubj) = schenk2002_rootfr(bounds,
+       !ubj, pcolumn, ivt, zi)        
     case default
-       call endrun(subname // ':: a root fraction function must be specified!')   
+       call endrun(subname // ':: a root fraction function must be specified!')
     end select
-    rootfr(bounds%begp:bounds%endp,nlevsoi+1:nlevgrnd)=0._r8   
-
   end subroutine init_vegrootfr
 
   !--------------------------------------------------------------------------------------   
@@ -144,5 +150,77 @@ contains
     return
 
   end function zeng2001_rootfr
+
+  function spruce_rootfr(bounds, ubj, njbed) result(rootfr)
+    !
+    ! DESCRIPTION
+    ! compute root profile for soil water uptake
+    ! using equation from spruce field observation 
+    !
+    ! USES
+    use shr_kind_mod   , only : r8 => shr_kind_r8
+    use shr_assert_mod , only : shr_assert
+    use shr_log_mod    , only : errMsg => shr_log_errMsg
+    use decompMod      , only : bounds_type
+    use pftvarcon      , only : noveg, roota_par, rootb_par  !these pars shall
+    use elm_varctl     , only : use_var_soil_thick
+    use VegetationType , only : veg_pp
+    use ColumnType     , only : col_pp
+    !
+    ! !ARGUMENTS:
+    implicit none
+    type(bounds_type) , intent(in)    :: bounds                  ! bounds
+    integer           , intent(in)    :: ubj                     ! ubnd
+    integer           , intent(in)    :: njbed(bounds%begc: )    ! nlev2bed
+    !
+    ! !RESULT
+    real(r8) :: rootfr(bounds%begp:bounds%endp , 1:ubj ) !
+    !
+    ! !LOCAL VARIABLES:
+    integer :: p, lev, c, nlevbed
+    real    :: totrootfr
+    real(r8) :: cumdist,cumdist_last,roota_slope,rootb_intercept
+    !------------------------------------------------------------------------
+
+    !(computing from surface, d is peat depth  in centimeter):
+    ! Y = root_slope*d+root_intercept  
+    ! 
+
+    do p = bounds%begp,bounds%endp
+       if (veg_pp%itype(p) /= noveg .and. .not.veg_pp%is_fates(p)) then
+          c = veg_pp%column(p)
+          rootb_intercept = rootb_par(veg_pp%itype(p))
+          roota_slope     = roota_par(veg_pp%itype(p))
+          nlevbed = njbed(c)
+          totrootfr = 0._r8
+          cumdist_last = rootb_intercept
+          do lev = 1, ubj
+             cumdist = min(cumdist_last + col_pp%dz(c,lev) * roota_slope, 1.0_r8)
+             if (cumdist > 0._r8) then
+               rootfr(p,lev) = max(cumdist, 0._r8) - max(cumdist_last, 0._r8)
+             endif
+             if (lev .eq. 1 .and. rootb_intercept .gt. 0) then
+               rootfr(p,lev) = rootfr(p,lev) + rootb_intercept
+             end if
+             cumdist_last = cumdist
+             if(lev <= nlevbed) then
+                totrootfr = totrootfr + rootfr(p,lev)
+             end if
+          end do
+
+          ! Adjust layer root fractions if nlev2bed < nlevsoi
+          if (use_var_soil_thick .and. nlevbed < ubj) then
+             do lev = 1, nlevbed
+                rootfr(p,lev) = rootfr(p,lev) / totrootfr
+             end do
+             rootfr(p,nlevbed+1:ubj) = 0.0_r8
+          endif
+       else
+          rootfr(p,1:ubj) = 0._r8
+       endif
+    enddo
+    return
+
+  end function spruce_rootfr
 
 end module RootBiophysMod

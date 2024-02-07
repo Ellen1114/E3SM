@@ -30,6 +30,7 @@ module CanopyFluxesMod
   use EnergyFluxType        , only : energyflux_type
   use FrictionvelocityType  , only : frictionvel_type
   use SoilStateType         , only : soilstate_type
+  use SoilHydrologyType     , only : soilhydrology_type
   use SolarAbsorbedType     , only : solarabs_type
   use SurfaceAlbedoType     , only : surfalb_type
   use CH4Mod                , only : ch4_type
@@ -61,7 +62,7 @@ contains
   subroutine CanopyFluxes(bounds,  num_nolakeurbanp, filter_nolakeurbanp, &
        atm2lnd_vars, canopystate_vars, cnstate_vars, energyflux_vars, &
        frictionvel_vars, soilstate_vars, solarabs_vars, surfalb_vars, &
-       ch4_vars, photosyns_vars)
+       ch4_vars, photosyns_vars, soilhydrology_vars)
     ! !DESCRIPTION:
     ! 1. Calculates the leaf temperature:
     ! 2. Calculates the leaf fluxes, transpiration, photosynthesis and
@@ -121,6 +122,7 @@ contains
     type(solarabs_type)       , intent(inout) :: solarabs_vars
     type(surfalb_type)        , intent(inout) :: surfalb_vars
     type(soilstate_type)      , intent(inout) :: soilstate_vars
+    type(soilhydrology_type)  , intent(in)    :: soilhydrology_vars
     type(ch4_type)            , intent(inout) :: ch4_vars
     type(photosyns_type)      , intent(inout) :: photosyns_vars
     real(r8) :: dtime
@@ -406,6 +408,7 @@ contains
          h2osoi_vol           => col_ws%h2osoi_vol            , & ! Input:  [real(r8) (:,:) ]  volumetric soil water (0<=h2osoi_vol<=watsat) [m3/m3] by F. Li and S. Levis
          h2osoi_liq           => col_ws%h2osoi_liq            , & ! Input:  [real(r8) (:,:) ]  liquid water (kg/m2)
          h2osoi_liqvol        => col_ws%h2osoi_liqvol         , & ! Output: [real(r8) (:,:) ]  volumetric liquid water (v/v)
+         zwt                  => soilhydrology_vars%zwt_col   , & ! Input:  [real(r8) (:)   ]  water table depth (m) 
 
          h2ocan               => veg_ws%h2ocan              , & ! Output: [real(r8) (:)   ]  canopy water (mm H2O)
          q_ref2m              => veg_ws%q_ref2m             , & ! Output: [real(r8) (:)   ]  2 m height surface specific humidity (kg/kg)
@@ -866,6 +869,8 @@ contains
 #if (defined HUM_HOL)
             if (veg_pp%itype(p) == 12) then
                 !DMRicciuto 12/4/2015 - changed to use average of layer 3 and 4 
+                !h2o_moss_inter(p) = 8.05_r8 * (1.0_r8 - min(max((0.15_r8-zwt(c))/(0.15_r8-0.5_r8),0._r8),1._r8))
+
                 h2o_moss_inter(p) = -18032 * ((h2osoi_vol(c,3)+h2osoi_vol(c,4))/2._r8)**4 +  &
                                 7248.1 * ((h2osoi_vol(c,3)+h2osoi_vol(c,4))/2._r8)**3 -  &
                                 591.74 * ((h2osoi_vol(c,3)+h2osoi_vol(c,4))/2._r8)**2 +  &
