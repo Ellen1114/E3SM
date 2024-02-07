@@ -117,7 +117,7 @@ contains
     character(len=CL)  :: stream_fldFileName_lightng ! lightning stream filename to read
     character(len=CL)  :: stream_fldFileName_popdens ! poplulation density stream filename
     character(len=CL)  :: stream_fldFileName_ndep    ! nitrogen deposition stream filename
-    logical :: use_sitedata, has_zonefile, use_daymet, use_livneh
+    logical :: use_sitedata, has_zonefile, use_daymet, use_livneh, use_w5e5
     data caldaym / 1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366 /    
 
     ! Constants to compute vapor pressure
@@ -219,7 +219,7 @@ contains
         !on first timestep, read all the met data for relevant gridcell(s) and store in array.
         !   Met data are held in short integer format to save memory.
         !   Each node must have enough memory to hold these data.
-        met_nvars=7
+        met_nvars=8    !8 for ZWT
         if (metdata_type(1:3) == 'cpl') met_nvars=14
 
         if (atm2lnd_vars%loaded_bypassdata == 0) then
@@ -242,11 +242,15 @@ contains
 
           use_livneh = .false.
           use_daymet = .false.
+          use_w5e5   = .false.
           if(index(metdata_type, 'livneh') .gt. 0) then 
               use_livneh = .true.
           else if (index(metdata_type, 'daymet') .gt. 0) then 
               use_daymet = .true.
+          else if (index(metdata_type, 'w5e5') .gt. 0) then
+              use_w5e5 = .true.
           end if
+
  
           metvars(1) = 'TBOT'
           metvars(2) = 'PSRF'
@@ -259,6 +263,7 @@ contains
           metvars(5) = 'PRECTmms'
           metvars(6) = 'WIND'
           metvars(7) = 'FLDS'
+          metvars(8) = 'ZWT'
           if (atm2lnd_vars%metsource .eq. 5) then 
               metvars(4) = 'SWNDF'
               metvars(5) = 'RAINC'
@@ -315,6 +320,8 @@ contains
           else if (use_daymet) then 
               atm2lnd_vars%startyear_met      = 1980
               atm2lnd_vars%endyear_met_spinup = atm2lnd_vars%endyear_met_trans
+          else if (use_w5e5) then 
+              atm2lnd_vars%endyear_met_trans  = 2019
           end if
 
           nyears_spinup = atm2lnd_vars%endyear_met_spinup - &
@@ -413,6 +420,8 @@ contains
                     metdata_fname = 'GSWP3_daymet4_' // trim(metvars(v)) // '_1980-2014_z' // zst(2:3) // '.nc'
                 else if (use_daymet .and. ztoget .ge. 16 .and. ztoget .le. 20) then 
                     metdata_fname = 'GSWP3v1_Daymet_' // trim(metvars(v)) // '_1980-2010_z' // zst(2:3) // '.nc'
+                else if (use_w5e5) then 
+                    metdata_fname = 'gswp_w5e5_' // trim(metvars(v)) // '_1901-2019_z' // zst(2:3) // '.nc'
                 end if
             else if (atm2lnd_vars%metsource == 5) then 
                     !metdata_fname = 'WCYCL1850S.ne30_' // trim(metvars(v)) // '_0076-0100_z' // zst(2:3) // '.nc'
@@ -517,7 +526,13 @@ contains
             if (atm2lnd_vars%tindex(g,v,1) == 0) then 
               atm2lnd_vars%tindex(g,v,1) = atm2lnd_vars%timelen(v)
               if (yr .le. atm2lnd_vars%endyear_met_spinup) atm2lnd_vars%tindex(g,v,1) = atm2lnd_vars%timelen_spinup(v)
-             end if
+            end if
+            if (yr .le. atm2lnd_vars%endyear_met_spinup .and. atm2lnd_vars%tindex(g,v,2) > atm2lnd_vars%timelen_spinup(v)) then
+              atm2lnd_vars%tindex(g,v,2) = 1
+            end if
+            if (yr .gt. atm2lnd_vars%endyear_met_spinup .and. atm2lnd_vars%tindex(g,v,2) > atm2lnd_vars%timelen(v)) then
+              atm2lnd_vars%tindex(g,v,2) = 1
+            end if
           end do    !end variable loop        
         else
           do v=1,met_nvars
@@ -622,6 +637,12 @@ contains
             ea = 0.70_R8 + 5.95e-05_R8 * 0.01_R8 * e * exp(1500.0_R8/tbot)
             atm2lnd_vars%forc_lwrad_not_downscaled_grc(g) = ea * SHR_CONST_STEBOL * tbot**4
         end if 
+
+        !Water table
+        atm2lnd_vars%forc_zwt_not_downscaled_grc(g) = -1.0_R8*((atm2lnd_vars%atm_input(8,g,1,tindex(8,1))*atm2lnd_vars%scale_factors(8)+ &
+                                                      atm2lnd_vars%add_offsets(8))*wt1(8) + (atm2lnd_vars%atm_input(8,g,1,tindex(8,2)) &
+                                                      *atm2lnd_vars%scale_factors(8)+atm2lnd_vars%add_offsets(8))*wt2(8)) * &
+                                                      atm2lnd_vars%var_mult(8,g,mon) + atm2lnd_vars%var_offset(8,g,mon) 
 
         !Shortwave radiation (cosine zenith angle interpolation)
         thishr = (tod-get_step_size()/2)/3600
@@ -730,7 +751,6 @@ contains
                                              !atm2lnd_vars%atm_input(8,g,1,tindex(2))*wt2)    ! zgcmxy  Atm state, default=30m
 
   !------------------------------------Fire data -------------------------------------------------------
- 
         nindex(1) = yr-1848
         nindex(2) = nindex(1)+1
         if (yr .lt. 1850 .or. const_climate_hist) nindex(1:2) = 2
@@ -820,7 +840,6 @@ contains
             end if
             close(nu_nml)
             call relavu( nu_nml )
-
             !Get all of the data (master processor only)
             allocate(atm2lnd_vars%lnfm_all       (192,94,2920))
             ierr = nf90_open(trim(stream_fldFileName_lightng), NF90_NOWRITE, ncid)
@@ -883,7 +902,6 @@ contains
           !spinup (model year > 1850)
           nindex(1) = min(max(yr-1848,2), 168)
           nindex(2) = min(nindex(1)+1, 168)
-
           if (atm2lnd_vars%loaded_bypassdata .eq. 0 .or. (mon .eq. 1 .and. day .eq. 1 .and. tod .eq. 0)) then 
             if (masterproc .and. i .eq. 1) then 
               nu_nml = getavu()
@@ -992,7 +1010,6 @@ contains
              call mpi_bcast (atm2lnd_vars%aerodata, 14*144*96*14, MPI_REAL8, 0, mpicom, ier)
           end if
         end if
-
         !Use ndep grid indices since they're on the same grid
         if (atm2lnd_vars%loaded_bypassdata .eq. 0 .and. (.not. (use_fates .or. use_cn) )   ) then
             mindist=99999
@@ -1055,6 +1072,7 @@ contains
 
 
         !------------------------------------Tidal forcing--------------------------------------------------
+#if (defined MARSH)
        if (atm2lnd_vars%loaded_bypassdata .eq. 0 ) then !.or. (mon .eq. 1 .and. day .eq. 1 .and. tod .eq. 0)) then ! Do on the first day of the year
         if (masterproc .and. i .eq. 1) then  ! Only do it on one processor
           ierr = nf90_open(trim(tide_file), nf90_nowrite, ncid)
@@ -1091,6 +1109,7 @@ contains
            call mpi_bcast (atm2lnd_vars%tide_salinity, 876000, MPI_REAL8, 0, mpicom, ier)
         end if
       end if
+#endif
 
        !set the topounit-level atmospheric state and flux forcings (bypass mode)
        do topo = grc_pp%topi(g), grc_pp%topf(g)
@@ -1139,8 +1158,7 @@ contains
          top_af%solar(topo) = top_af%solad(topo,2) + top_af%solad(topo,1) + &
                               top_af%solai(topo,2) + top_af%solai(topo,1)
        end do
-     
-  !-----------------------------------------------------------------------------------------------------
+       !-----------------------------------------------------------------------------------------------------
 #else
 
        atm2lnd_vars%forc_hgt_grc(g)     = x2l(index_x2l_Sa_z,i)         ! zgcmxy  Atm state m
@@ -1240,7 +1258,6 @@ contains
                               top_af%solai(topo,2) + top_af%solai(topo,1)
          end do
        end if  
-#endif
 
        ! Determine optional receive fields
        ! CO2 (and C13O2) concentration: constant, prognostic, or diagnostic
@@ -1284,6 +1301,7 @@ contains
        if (index_x2l_Sa_methane /= 0) then
           atm2lnd_vars%forc_pch4_grc(g) = x2l(index_x2l_Sa_methane,i)
        endif
+#endif
 
        ! Determine derived quantities for required fields
 
