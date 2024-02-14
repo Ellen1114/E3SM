@@ -286,7 +286,7 @@ contains
              call interpMonthlyVeg(bounds_proc, canopystate_vars)
              call t_stopf('interpMonthlyVeg')
           endif
-
+       end if
     elseif(use_fates) then
        if(use_fates_sp) then
        
@@ -1141,7 +1141,7 @@ contains
              if (use_fates_sp) then
                call SatellitePhenology(bounds_clump,               &
                filter_inactive_and_active(nc)%num_soilp, filter_inactive_and_active(nc)%soilp,    &
-               waterstate_vars, canopystate_vars)
+               waterstate_vars, canopystate_vars, temperature_vars, soilstate_vars)
              endif
              
           else ! not ( if-use_cn   or if-use_fates)

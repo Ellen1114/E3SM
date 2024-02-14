@@ -112,6 +112,7 @@ module ColumnDataType
     real(r8), pointer :: h2osoi_vol         (:,:) => null() ! volumetric soil water (0<=h2osoi_vol<=watsat) (1:nlevgrnd) (m3/m3)
     real(r8), pointer :: h2osfc             (:)   => null() ! surface water (kg/m2)
     real(r8), pointer :: salinity           (:) => null() ! salinity from PFLOTRAN when using interface (TAO 5/19/2020)
+    real(r8), pointer :: salt_content       (:,:) => null() ! salt content
     real(r8), pointer :: h2osfc_tide        (:)   => null() ! tidal height above surface
     real(r8), pointer :: h2ocan             (:)   => null() ! canopy water integrated to column (kg/m2)
     real(r8), pointer :: total_plant_stored_h2o(:)=> null() ! total water in plants (kg/m2)
@@ -531,6 +532,7 @@ module ColumnDataType
 
     real(r8), pointer :: qflx_lat_aqu         (:)   => null() ! Total lateral flux between hummock/hollow (mm H2O /s)
     real(r8), pointer :: qflx_lat_aqu_layer   (:,:) => null() ! Lateral flux between hummock/hollow by layer (mm H2O/s)
+    real(r8), pointer :: qflx_tran_veg_col_sat (:)  => null() ! 
     real(r8), pointer :: qflx_surf_input      (:)   => null() ! Runoff input from Hummock (mm H2O/s)
     real(r8), pointer :: qflx_tide            (:)   => null() ! tidal flux between consecutive timesteps TAO
 
@@ -664,8 +666,8 @@ module ColumnDataType
     real(r8), pointer :: vegfire                               (:)     => null() ! column (gC/m2/s) patch-level fire loss (obsolete, mark for removal) (p2c)
     real(r8), pointer :: wood_harvestc                         (:)     => null() ! column (p2c)
     real(r8), pointer :: hrv_xsmrpool_to_atm                   (:)     => null() ! column excess MR pool harvest mortality (gC/m2/s) (p2c)
-    real(r8), pointer :: plant_to_litter_cflux		             (:)     => null() ! for the purpose of mass balance check
-    real(r8), pointer :: plant_to_cwd_cflux		                 (:)     => null() ! for the purpose of mass balance check
+    real(r8), pointer :: plant_to_litter_cflux                 (:)     => null() ! for the purpose of mass balance check
+    real(r8), pointer :: plant_to_cwd_cflux                    (:)     => null() ! for the purpose of mass balance check
     ! Temporary and annual sums
     real(r8), pointer :: annsum_npp                            (:)     => null() ! col annual sum of NPP, averaged from pft-level (gC/m2/yr)
     ! C4MIP output variable
@@ -5880,6 +5882,7 @@ contains
     allocate(this%qflx_drain_vr          (begc:endc,1:nlevgrnd))  ; this%qflx_drain_vr        (:,:) = spval
     allocate(this%qflx_h2osfc2topsoi     (begc:endc))             ; this%qflx_h2osfc2topsoi   (:)   = spval
     allocate(this%qflx_snow2topsoi       (begc:endc))             ; this%qflx_snow2topsoi     (:)   = spval
+    allocate(this%qflx_lateral           (begc:endc))             ; this%qflx_lateral         (:)   = 0._r8
     allocate(this%snow_sources           (begc:endc))             ; this%snow_sources         (:)   = spval
     allocate(this%snow_sinks             (begc:endc))             ; this%snow_sinks           (:)   = spval
     allocate(this%qflx_irrig             (begc:endc))             ; this%qflx_irrig           (:)   = spval
@@ -5890,6 +5893,7 @@ contains
     allocate(this%qflx_h2orof_drain      (begc:endc))             ; this%qflx_h2orof_drain    (:)   = spval
     allocate(this%qflx_lat_aqu           (begc:endc))             ; this%qflx_lat_aqu         (:)   = 0._r8
     allocate(this%qflx_lat_aqu_layer     (begc:endc,1:nlevgrnd))  ; this%qflx_lat_aqu_layer   (:,:) = 0._r8
+    allocate(this%qflx_tran_veg_sat      (begc:endc))             ; this%qflx_tran_veg_sat    (:)   = 0._r8
     allocate(this%qflx_surf_input        (begc:endc))             ; this%qflx_surf_input      (:)   = spval   
     allocate(this%qflx_tide              (begc:endc))             ; this%qflx_tide            (:)   = spval !TAO
 

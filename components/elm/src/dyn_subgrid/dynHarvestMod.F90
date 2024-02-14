@@ -386,7 +386,6 @@ contains
             do varnum = 1, num_harvest_vars
                am = am + harvest_rates(varnum,g)
             end do
-            am = harvest(g,ti)
 #if (defined HUM_HOL)
            call get_curr_date(yr, mon, day, sec)
            dtime  = get_step_size()

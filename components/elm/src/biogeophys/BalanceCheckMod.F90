@@ -342,6 +342,7 @@ contains
                   - qflx_evap_tot(c) - qflx_surf(c)  - qflx_h2osfc_surf(c) &
                   - qflx_qrgwl(c) - qflx_drain(c) - qflx_drain_perched(c) - qflx_snwcp_ice(c) &
                   - qflx_lateral(c) + qflx_h2orof_drain(c)) * dtime
+#endif
              dwb(c) = (endwb(c)-begwb(c))/dtime
 
           else

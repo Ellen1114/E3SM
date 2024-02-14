@@ -314,6 +314,7 @@ contains
     use elm_varctl, only : use_fates_sp
     use elm_time_manager, only : get_curr_date, get_step_size, get_nstep
     use elm_varcon      , only : secspday
+    use elm_varctl      , only : use_fates_sp
     use pftvarcon, only : noveg, nbrdlf_dcd_brl_shrub, season_decid, stress_decid
 !if defined HUM_HOL
     use pftvarcon, only : phen_a, phen_b, phen_c, phen_topt, phen_fstar, phen_tc

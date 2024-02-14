@@ -153,6 +153,7 @@ module VegetationDataType
     real(r8), pointer :: totvegc            (:) => null() ! (gC/m2) total vegetation carbon, excluding cpool
     real(r8), pointer :: totpftc            (:) => null() ! (gC/m2) total patch-level carbon, including cpool
     real(r8), pointer :: totvegc_abg        (:) => null() ! (gC/m2) total above vegetation carbon, excluding cpool
+    real(r8), pointer :: osm_inhib          (:) => null() ! osm_inhib
     real(r8), pointer :: begcb              (:) => null() ! patch carbon mass, beginning of time step (gC/m**2)
     real(r8), pointer :: endcb              (:) => null() ! patch carbon mass, end of time step (gC/m**2)
     real(r8), pointer :: errcb              (:) => null() ! patch carbon balance error for the timestep (gC/m**2)
@@ -5807,6 +5808,7 @@ module VegetationDataType
        allocate(this%leafc_to_litter                     (begp:endp)) ;    this%leafc_to_litter                      (:) = spval
        allocate(this%frootc_to_litter                    (begp:endp)) ;    this%frootc_to_litter                     (:) = spval
        allocate(this%livestemc_to_litter                 (begp:endp)) ;    this%livestemc_to_litter                  (:) = spval
+       allocate(this%livecrootc_to_litter                (begp:endp)) ;    this%livecrootc_to_litter                 (:) = spval
        allocate(this%grainc_to_food                      (begp:endp)) ;    this%grainc_to_food                       (:) = spval
        allocate(this%leaf_mr                             (begp:endp)) ;    this%leaf_mr                              (:) = spval
        allocate(this%froot_mr                            (begp:endp)) ;    this%froot_mr                             (:) = spval
@@ -8962,6 +8964,7 @@ module VegetationDataType
     allocate(this%npool_to_grainn                     (begp:endp)) ; this%npool_to_grainn                     (:) = spval
     allocate(this%npool_to_grainn_storage             (begp:endp)) ; this%npool_to_grainn_storage             (:) = spval
     allocate(this%livestemn_to_litter                 (begp:endp)) ; this%livestemn_to_litter                 (:) = spval
+    allocate(this%livecrootn_to_litter                (begp:endp)) ; this%livecrootn_to_litter                (:) = spval
     allocate(this%grainn_to_food                      (begp:endp)) ; this%grainn_to_food                      (:) = spval
     allocate(this%grainn_xfer_to_grainn               (begp:endp)) ; this%grainn_xfer_to_grainn               (:) = spval
     allocate(this%grainn_storage_to_xfer              (begp:endp)) ; this%grainn_storage_to_xfer              (:) = spval
@@ -10056,6 +10059,7 @@ module VegetationDataType
     allocate(this%ppool_to_grainp                     (begp:endp)) ; this%ppool_to_grainp                     (:) = spval
     allocate(this%ppool_to_grainp_storage             (begp:endp)) ; this%ppool_to_grainp_storage             (:) = spval
     allocate(this%livestemp_to_litter                 (begp:endp)) ; this%livestemp_to_litter                 (:) = spval
+    allocate(this%livecrootp_to_litter                (begp:endp)) ; this%livecrootp_to_litter                (:) = spval
     allocate(this%grainp_to_food                      (begp:endp)) ; this%grainp_to_food                      (:) = spval
     allocate(this%grainp_xfer_to_grainp               (begp:endp)) ; this%grainp_xfer_to_grainp               (:) = spval
     allocate(this%grainp_storage_to_xfer              (begp:endp)) ; this%grainp_storage_to_xfer              (:) = spval

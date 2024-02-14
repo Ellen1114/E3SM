@@ -317,12 +317,10 @@ contains
      use abortutils       , only : endrun
 #if (defined HUM_HOL || defined MARSH)
      use pftvarcon        , only : humhol_ht, humhol_dist, hum_frac, qflx_h2osfc_surfrate
-      use elm_instMod     , only : atm2lnd_vars
 #endif
      use elm_time_manager , only : get_step_size, get_nstep, get_curr_date, get_curr_time
 #if defined MARSH
       use pftvarcon       , only : num_tide_comps, tide_baseline,tide_coeff_period, tide_coeff_phase, tide_coeff_amp,sfcflow_ratescale
-      use elm_instMod     , only : atm2lnd_vars
       use elm_varctl      , only : tide_file
 #endif
      use elm_varcon       , only : secspday
@@ -385,7 +383,7 @@ contains
      integer  :: jwt(bounds%begc:bounds%endc)
      integer  :: yr, mon, day, tod               !
      integer  :: days, seconds               !
-     integer  :: ii, g
+     integer  :: ii
    !   real(r8) :: h2osfc_tide
      real(r8) :: h2osfc_before
      logical :: obs_zwt_forcing = .true.    !use observed water table foring (HUMHOL option) 
@@ -450,7 +448,7 @@ contains
           i_0                  =>    soilhydrology_vars%i_0_col              , & ! Input:  [real(r8) (:)   ]  column average soil moisture in top VIC layers (mm)
           h2osfcflag           =>    soilhydrology_vars%h2osfcflag           , & ! Input:  logical
           pc_grid              =>    soilhydrology_vars%pc                   , & ! Input:  [real(r8) (:)   ]  threshold for outflow from surface water storage
-          icefrac              =>    soilhydrology_vars%icefrac_col            & ! Output: [real(r8) (:,:) ]  fraction of ice
+          icefrac              =>    soilhydrology_vars%icefrac_col          , & ! Output: [real(r8) (:,:) ]  fraction of ice
           h2osoi_vol           =>    col_ws%h2osoi_vol                       , & ! Input: [real(r8) (:,:) ]  volumetric soil water (0<=h2osoi_vol<=watsat) [m3/m3]
           zi                   =>    col_pp%zi                                 & ! Input: [real(r8) (:,:) ]  interface level below a "z" level (m)
               )
@@ -910,7 +908,7 @@ contains
       !$acc routine seq
      use elm_varcon       , only : pondmx, tfrz, watmin,denice,denh2o
      use elm_varpar       , only : nlevsoi, nlevgrnd
-     use clm_time_manager , only : get_step_size, get_curr_date, get_curr_time
+     use elm_time_manager , only : get_step_size, get_curr_date, get_curr_time
      use column_varcon    , only : icol_roof, icol_road_imperv
      use elm_varctl       , only : use_vsfm, use_var_soil_thick
      use domainMod        , only : ldomain

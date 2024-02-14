@@ -353,18 +353,18 @@ contains
     allocate( this%nfixer(0:numpft))                             ; this%nfixer(:)                =spval
     ! -----------------------------------------------------------------------------------------------------------
 
-    allocate( this%crit_gdd1(0:numpft))                          ; this%crit_gdd1(:)             =nan
-    allocate( this%crit_gdd2(0:numpft))                          ; this%crit_gdd2(:)             =nan
+    allocate( this%crit_gdd1(0:numpft))                          ; this%crit_gdd1(:)             =spval
+    allocate( this%crit_gdd2(0:numpft))                          ; this%crit_gdd2(:)             =spval
     !----------------------F.-M. Yuan (2018-03-23): user-defined parameter file ---------------------------------------------------------------------
     allocate(this%nonvascular(0:numpft))                         ; this%nonvascular(:)           =huge(1)
     allocate(this%nfixer(0:numpft))                              ; this%nfixer(:)                =huge(1)
  
-    allocate( this%sal_threshold(0:numpft))        ; this%sal_threshold(:)       =nan
-    allocate( this%KM_salinity(0:numpft))          ; this%KM_salinity(:)         =nan
-    allocate( this%osm_inhib(0:numpft))            ; this%osm_inhib(:)           =nan
-    allocate( this%sal_opt(0:numpft))              ; this%sal_opt(:)             =nan
-    allocate( this%sal_tol(0:numpft))              ; this%sal_tol(:)             =nan   
-    allocate( this%floodf(0:numpft))               ; this%floodf(:)              =nan
+    allocate( this%sal_threshold(0:numpft))        ; this%sal_threshold(:)       =spval
+    allocate( this%KM_salinity(0:numpft))          ; this%KM_salinity(:)         =spval
+    allocate( this%osm_inhib(0:numpft))            ; this%osm_inhib(:)           =spval
+    allocate( this%sal_opt(0:numpft))              ; this%sal_opt(:)             =spval
+    allocate( this%sal_tol(0:numpft))              ; this%sal_tol(:)             =spval 
+    allocate( this%floodf(0:numpft))               ; this%floodf(:)              =spval
     do m = 0,numpft
 
        ! not needed anymore: woody(m)=1 for tree, 2 for shrub, or 0 for any other

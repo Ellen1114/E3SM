@@ -714,6 +714,8 @@ contains
     allocate( needleleaf         (0:mxpft) )
     allocate( nfixer             (0:mxpft) )
 
+    allocate( gcpsi              (0:mxpft) )
+    allocate( pftcc              (0:mxpft) )
 
     ! Tidal cycle coefficients
     allocate( tide_coeff_amp (max_tide_coeffs))
