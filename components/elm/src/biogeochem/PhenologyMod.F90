@@ -817,11 +817,11 @@ contains
 
             ! update offset_counter and test for the end of the offset period
             if (offset_flag(p) == 1.0_r8) then
-               if (c==2) then
-                  offset_counter(p) = offset_counter(p)
-               else if (c==1) then
+               !if (c==2) then
+               !   offset_counter(p) = offset_counter(p)
+               !else if (c==1) then
                   offset_counter(p) = offset_counter(p) - dt
-               endif
+               !endif
 
                ! if this is the end of the offset_period, reset phenology
                ! flags and indices

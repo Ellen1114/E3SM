@@ -422,7 +422,8 @@ contains
               ws_flag = 0._r8
             end if
             !------ Seasonal deciduous phenology ----------------------
-!put IFDEf hum_hol here
+#if defined HUM_HOL
+            !DMR note 2/19/24 - this does not currently work
             !crit_onset_gdd = exp(4.8_r8 + 0.13_r8*(tmean(p) - SHR_CONST_TKFRZ))
             crit_onset_gdd = phen_fstar
             if (.not. use_cn .and. season_decid(ivt(p)) == 1._r8) then
@@ -545,7 +546,7 @@ contains
                 sp_fdd_off(p)    = 0._r8
               end if
            endif
-!End the ifdef here
+#endif
          endif
 
          tsai(p) = timwt(1)*msai2t(p,1) + timwt(2)*msai2t(p,2)
