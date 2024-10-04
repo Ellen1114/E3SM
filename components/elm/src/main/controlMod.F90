@@ -40,7 +40,7 @@ module controlMod
   use UrbanParamsType         , only: urban_hac, urban_traffic
   use FrictionVelocityMod     , only: implicit_stress, atm_gustiness, force_land_gustiness
   use elm_varcon              , only: h2osno_max
-  use elm_varctl              , only: use_dynroot, use_fan, fan_mode, fan_to_bgc_veg
+  use elm_varctl              , only: use_dynroot, use_fan, fan_mode, fan_to_bgc_veg, use_obs_zwt
   use FanMod                  , only: nh4_ads_coef
   use AllocationMod         , only: nu_com_phosphatase,nu_com_nfix
   use elm_varctl              , only: nu_com, use_var_soil_thick
@@ -304,6 +304,8 @@ contains
         alquimia_NO3_name, alquimia_handsoff
 
     namelist /elm_inparm/ use_dynroot
+
+    namelist /elm_inparm/ use_obs_zwt
 
     namelist /elm_inparm/ use_var_soil_thick, use_lake_wat_storage
 
@@ -851,6 +853,8 @@ contains
 
     call mpi_bcast (use_dynroot, 1, MPI_LOGICAL, 0, mpicom, ier)
 
+    call mpi_bcast (use_obs_zwt, 1, MPI_LOGICAL, 0, mpicom, ier)
+
     call mpi_bcast (use_lake_wat_storage, 1, MPI_LOGICAL, 0, mpicom, ier)
 
     if ((use_cn .or. use_fates) .and. use_vertsoilc) then
@@ -1146,6 +1150,7 @@ contains
        write(iulog, *) '   surfprof_exp                                          : ', surfprof_exp
        write(iulog, *) '   pftspecific_rootingprofile                            : ', pftspecific_rootingprofile
        write(iulog, *) '   dynamic roots                                         : ', use_dynroot
+       write(iulog, *) '   use observed water table                              : ', use_obs_zwt
     end if
 
     if (use_cn) then

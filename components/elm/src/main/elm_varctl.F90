@@ -282,6 +282,10 @@ module elm_varctl
 
   logical, public :: use_dynroot = .false. ! true => use dynamic root module
   !$acc declare create(use_dynroot)
+
+  !Switch to use observed water table (HUM_HOL)
+  logical, public :: use_obs_zwt = .false. 
+
   !----------------------------------------------------------
   ! glacier_mec control variables: default values (may be overwritten by namelist)
   ! NOTE: glc_smb must have the same values for CLM and GLC

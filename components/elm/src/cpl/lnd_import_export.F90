@@ -28,7 +28,7 @@ contains
     ! !USES:
     use elm_varctl       , only: co2_type, co2_ppmv, iulog, use_c13, create_glacier_mec_landunit, &
                                  metdata_type, metdata_bypass, metdata_biases, co2_file, aero_file, tide_file, use_atm_downscaling_to_topunit
-    use elm_varctl       , only: const_climate_hist, add_temperature, add_co2, use_cn, use_fates
+    use elm_varctl       , only: const_climate_hist, add_temperature, add_co2, use_cn, use_fates, use_obs_zwt
     use elm_varctl       , only: startdate_add_temperature, startdate_add_co2
     use elm_varcon       , only: rair, o2_molar_const, c13ratio
     use elm_time_manager , only: get_nstep, get_step_size, get_curr_calday, get_curr_date 
@@ -79,11 +79,11 @@ contains
     real(r8) :: thiscosz, avgcosz, szenith
     integer  :: swrad_period_len, swrad_period_start, thishr, thismin
     real(r8) :: timetemp(2)
-    real(r8) :: latixy(500000), longxy(500000)
+    real(r8) :: latixy(1000000), longxy(1000000)
     integer ::  ierr, varid, dimid, yr, mon, day, tod, nindex(2), caldaym(13)
     integer ::  ncid, met_ncids(14), mask_ncid, thisncid, ng, tm
     integer ::  aindex(2), tindex(14,2), starti(3), counti(3)
-    integer ::  grid_map(500000), zone_map(500000)
+    integer ::  grid_map(1000000), zone_map(1000000)
     integer ::  met_nvars, nyears_spinup, nyears_trans, starti_site, endi_site
     real(r8) :: smap05_lat(360), smap05_lon(720)
     real(r8) :: smapt62_lat(94), smapt62_lon(192)
@@ -98,7 +98,7 @@ contains
     !real(r8) :: aerodata(14,144,96,14)
     integer  :: lnfmind(2)
     integer  :: var_month_count(12)
-    integer*2 :: temp(1,500000)
+    integer*2 :: temp(1,1000000)
     integer :: xtoget, ytoget, thisx, thisy, calday_start
     integer :: sdate_addt, sy_addt, sm_addt, sd_addt
     integer :: sdate_addco2, sy_addco2, sm_addco2, sd_addco2
@@ -219,11 +219,9 @@ contains
         !on first timestep, read all the met data for relevant gridcell(s) and store in array.
         !   Met data are held in short integer format to save memory.
         !   Each node must have enough memory to hold these data.
-#ifdef HUM_HOL
-        met_nvars=8    !8 for ZWT
-#else
-        met_nvars=7
-#endif
+        
+        met_nvars = 7
+        if (use_obs_zwt) met_nvars = 8
         if (metdata_type(1:3) == 'cpl') met_nvars=14
 
         if (atm2lnd_vars%loaded_bypassdata == 0) then
@@ -240,6 +238,8 @@ contains
             atm2lnd_vars%metsource = 4
           else if (index(metdata_type,'cpl') .gt. 0) then 
             atm2lnd_vars%metsource = 5
+          else if (index(metdata_type,'era5') .gt. 0) then
+            atm2lnd_vars%metsource = 6
           else
             call endrun( sub//' ERROR: Invalid met data source for cpl_bypass' )
           end if
@@ -267,7 +267,7 @@ contains
           metvars(5) = 'PRECTmms'
           metvars(6) = 'WIND'
           metvars(7) = 'FLDS'
-          metvars(8) = 'ZWT'
+          if (use_obs_zwt) metvars(8) = 'ZWT'
           if (atm2lnd_vars%metsource .eq. 5) then 
               metvars(4) = 'SWNDF'
               metvars(5) = 'RAINC'
@@ -316,6 +316,9 @@ contains
             atm2lnd_vars%startyear_met      = 566 !76
             atm2lnd_vars%endyear_met_spinup = 590 !100
             atm2lnd_vars%endyear_met_trans  = 590 !100
+          else if (atm2lnd_vars%metsource == 6) then
+            atm2lnd_vars%startyear_met      = 1980
+            atm2lnd_vars%endyear_met_trans  = 2023
           end if
 
           if (use_livneh) then 
@@ -323,7 +326,7 @@ contains
               atm2lnd_vars%endyear_met_spinup = 1969
           else if (use_daymet) then 
               atm2lnd_vars%startyear_met      = 1980
-              atm2lnd_vars%endyear_met_spinup = atm2lnd_vars%endyear_met_trans
+              atm2lnd_vars%endyear_met_spinup = 1999 !atm2lnd_vars%endyear_met_trans
           else if (use_w5e5) then 
               atm2lnd_vars%endyear_met_trans  = 2019
           end if
@@ -346,7 +349,7 @@ contains
 
           if (atm2lnd_vars%metsource .ne. 2) then 
             ng = 0     !number of points
-            do v=1,500000
+            do v=1,1000000
               read(13,*, end=10), longxy(v), latixy(v), zone_map(v), grid_map(v)
               ng = ng + 1
             end do
@@ -398,38 +401,25 @@ contains
                 metdata_fname =  trim(metsource_str) // '_' // trim(metvars(v)) // '_z' // zst(2:3) // '.nc'
             else if (atm2lnd_vars%metsource == 1) then 
                 metdata_fname = 'CRUNCEP.v5_' // trim(metvars(v)) // '_1901-2013_z' // zst(2:3) // '.nc'
-                if (use_livneh .and. ztoget .ge. 16 .and. ztoget .le. 20) then 
-                    metdata_fname = 'CRUNCEP5_Livneh_' // trim(metvars(v)) // '_1950-2013_z' // zst(2:3) // '.nc'
-                else if (use_daymet .and. ztoget .ge. 16 .and. ztoget .le. 20) then 
-                    metdata_fname = 'CRUNCEP5_Daymet3_' // trim(metvars(v)) // '_1980-2013_z' // zst(2:3) // '.nc'
-                end if
             else if (atm2lnd_vars%metsource == 2) then
                 metdata_fname = 'all_hourly.nc'
             else if (atm2lnd_vars%metsource == 3) then 
                metdata_fname = 'Princeton_' // trim(metvars(v)) // '_1901-2012_z' // zst(2:3) // '.nc'
-                if (use_livneh .and. ztoget .ge. 16 .and. ztoget .le. 20) then
-                    metdata_fname = 'Princeton_Livneh_' // trim(metvars(v)) // '_1950-2012_z' // zst(2:3) // '.nc'
-                else if (use_daymet .and. ztoget .ge. 16 .and. ztoget .le. 20) then
-                    metdata_fname = 'Princeton_Daymet3_' // trim(metvars(v)) // '_1980-2012_z' // zst(2:3) // '.nc'
-                end if
             else if (atm2lnd_vars%metsource == 4) then 
                 metdata_fname = 'GSWP3_' // trim(metvars(v)) // '_1901-2014_z' // zst(2:3) // '.nc'
-                if(index(metdata_type, 'v1') .gt. 0) &
+                if(index(metdata_type, 'v1') .gt. 0) then
                     metdata_fname = 'GSWP3_' // trim(metvars(v)) // '_1901-2010_z' // zst(2:3) // '.nc'
-
-                if (use_livneh .and. ztoget .ge. 16 .and. ztoget .le. 20) then 
-                    metdata_fname = 'GSWP3_Livneh_' // trim(metvars(v)) // '_1950-2010_z' // zst(2:3) // '.nc'                
                 else if (use_daymet .and. (index(metdata_type, 'daymet4') .gt. 0) ) then
-                   !daymet v4 with GSWP3 v2 for NA with user-defined zone-mappings.txt
-                    metdata_fname = 'GSWP3_daymet4_' // trim(metvars(v)) // '_1980-2014_z' // zst(2:3) // '.nc'
-                else if (use_daymet .and. ztoget .ge. 16 .and. ztoget .le. 20) then 
-                    metdata_fname = 'GSWP3v1_Daymet_' // trim(metvars(v)) // '_1980-2010_z' // zst(2:3) // '.nc'
+                   !daymet v4 with GSWP3 v2 for NA with user-defined zone-mappings.txt, 4km resolution for TES SFA
+                   metdata_fname = 'Daymet_GSWP3_TESSFA.4km_' // trim(metvars(v)) // '_1980-2014_z' // zst(2:3) // '.nc'
                 else if (use_w5e5) then 
                     metdata_fname = 'gswp_w5e5_' // trim(metvars(v)) // '_1901-2019_z' // zst(2:3) // '.nc'
                 end if
             else if (atm2lnd_vars%metsource == 5) then 
                     !metdata_fname = 'WCYCL1850S.ne30_' // trim(metvars(v)) // '_0076-0100_z' // zst(2:3) // '.nc'
                     metdata_fname = 'CBGC1850S.ne30_' // trim(metvars(v)) // '_0566-0590_z' // zst(2:3) // '.nc'
+            else if (atm2lnd_vars%metsource == 6) then
+                    metdata_fname = 'Daymet_ERA5_TESSFA.4km_' // trim(metvars(v)) // '_1980-2023_z' // zst(2:3) // '.nc'
             end if
   
             ierr = nf90_open(trim(metdata_bypass) // '/' // trim(metdata_fname), NF90_NOWRITE, met_ncids(v))
@@ -643,11 +633,12 @@ contains
         end if 
 
         !Water table
-        atm2lnd_vars%forc_zwt_not_downscaled_grc(g) = -1.0_R8*((atm2lnd_vars%atm_input(8,g,1,tindex(8,1))*atm2lnd_vars%scale_factors(8)+ &
+        if (use_obs_zwt) then 
+            atm2lnd_vars%forc_zwt_not_downscaled_grc(g) = -1.0_R8*((atm2lnd_vars%atm_input(8,g,1,tindex(8,1))*atm2lnd_vars%scale_factors(8)+ &
                                                       atm2lnd_vars%add_offsets(8))*wt1(8) + (atm2lnd_vars%atm_input(8,g,1,tindex(8,2)) &
                                                       *atm2lnd_vars%scale_factors(8)+atm2lnd_vars%add_offsets(8))*wt2(8)) * &
                                                       atm2lnd_vars%var_mult(8,g,mon) + atm2lnd_vars%var_offset(8,g,mon) 
-
+        end if
 
         !Shortwave radiation (cosine zenith angle interpolation)
         thishr = (tod-get_step_size()/2)/3600

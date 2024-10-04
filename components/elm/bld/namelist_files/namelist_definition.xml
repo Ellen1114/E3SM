@@ -807,6 +807,12 @@ Max number of plant functional types in naturally vegetated landunit.
 Toggle to turn on the dynamic root model.
 </entry>
 
+<entry id="use_obs_zwt" type="logical" category="physics"
+       group="elm_inparm" valid_values="" value=".false.">
+Toggle to turn on the dynamic root model.
+</entry>
+
+
 <!-- ========================================================================================  -->
 <!-- Namelist options for FAN model                                                   -->
 <!-- ========================================================================================  -->

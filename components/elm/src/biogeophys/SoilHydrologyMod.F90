@@ -317,6 +317,7 @@ contains
      use abortutils       , only : endrun
 #if (defined HUM_HOL || defined MARSH)
      use pftvarcon        , only : humhol_ht, humhol_dist, hum_frac, qflx_h2osfc_surfrate
+     use elm_varctl       , only : use_obs_zwt
 #endif
      use elm_time_manager , only : get_step_size, get_nstep, get_curr_date, get_curr_time
 #if defined MARSH
@@ -386,7 +387,6 @@ contains
      integer  :: ii
    !   real(r8) :: h2osfc_tide
      real(r8) :: h2osfc_before
-     logical :: obs_zwt_forcing = .true.    !use observed water table foring (HUMHOL option) 
      !-----------------------------------------------------------------------
 
      associate(                                                    &
@@ -746,9 +746,8 @@ contains
                  !water table
                  qflx_lat_aqu(:) = 0._r8
                else
-                 if (obs_zwt_forcing) then
+                 if (use_obs_zwt) then
                    g = col_pp%gridcell(c)
-           
                    qflx_lat_aqu(1) = ka_hu * (zwt_hu-(atm2lnd_vars%forc_zwt_not_downscaled_grc(g)+humhol_ht)) / 1.0_r8
                    qflx_lat_aqu(2) = ka_ho * (zwt_ho-atm2lnd_vars%forc_zwt_not_downscaled_grc(g)) / 1.0_r8
                  else
